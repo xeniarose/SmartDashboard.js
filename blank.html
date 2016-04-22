@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>SmartDashboard.js - Properties</title>
+    <link rel="stylesheet" href="index.css" />
+    <link rel="stylesheet" id="theme-css" />
+    <style>
+        body {
+            padding-bottom: 5em;
+        }
+    </style>
+</head>
+
+<body class="options">
+    <form action="javascript:void(0)" onsubmit="save()">
+        <div class="form-items">
+            
+        </div>
+        
+        <div class="align-bottom text-right button-pane">
+            <button type="button" onclick="window.close()">Close</button>
+        </div>
+    </form>
+    <script>
+        global.SmartDashboard.setTheme(global.SmartDashboard.options.theme, document.querySelector("#theme-css"));
+        
+        window.addField = function(name, type, def, callback){
+            var label = document.createElement("label");
+            label.textContent = name + ": ";
+            var inp = document.createElement("input");
+            inp.value = def;
+            inp.onchange = (function(name){
+                return function(e){
+                    callback(name, e.target.value);
+                };
+            })(name);
+            label.appendChild(inp);
+            document.querySelector(".form-items").appendChild(label);
+            document.querySelector(".form-items").appendChild(document.createElement("br"));
+        }
+    </script>
+</body>
+</html>

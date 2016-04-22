@@ -1,0 +1,19 @@
+{
+  "main": "index.html",
+  "name": "SmartDashboard",
+  "description": "Unofficial FRC SmartDashboard in nw.js",
+  "version": "0.1.0",
+  "keywords": ["frc", "smartdashboard"],
+  "window": {
+    "title": "SmartDashboard",
+    "icon": "assets/favicon.png",
+    "toolbar": true,
+    "frame": true,
+    "width": 800,
+    "height": 600,
+    "position": "center",
+    "transparent": false
+  },
+  "js-flags": "--expose-gc",
+  "single-instance": false
+}
