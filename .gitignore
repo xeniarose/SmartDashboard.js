@@ -3,3 +3,5 @@ plugins/
 themes/
 *.bat
 save.json
+build/
+cache/

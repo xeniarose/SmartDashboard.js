@@ -7,8 +7,24 @@
     <link rel="stylesheet" href="index.css" />
     <link rel="stylesheet" id="theme-css" />
     <style>
-        body {
-            padding-bottom: 5em;
+        form {
+            height: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-items {
+            flex: 1 1 auto;
+            overflow-y: auto;
+            min-height: 0px;
+            padding: 1em;
+        }
+        
+        .button-pane {
+            border-top: 1px solid black;
+            width: 100%;
+            text-align: right;
         }
     </style>
 </head>

@@ -23,6 +23,105 @@ class NumberBox extends Widget {
 
 SmartDashboard.registerWidget(NumberBox, "number");
 
+class Graph extends Widget {
+    render() {
+        this.graph = document.createElement("div");
+        this.graph.classList.add("widget-graph");
+        this.root.appendChild(this.graph);
+        
+        this.items = [];
+
+        this.dataset = new vis.DataSet(this.items);
+        this.visOptions = {
+            start: vis.moment().add(-30, 'seconds'), // changed so its faster
+            end: vis.moment(),
+            drawPoints: {
+                style: 'circle' // square, circle
+            },
+            dataAxis: {
+                left: {
+                    format: function(e){
+                        return '' + e;
+                    }
+                }
+            },
+            //moveable: false,
+            //zoomable: true,
+            interpolation: false,
+            shaded: {
+                orientation: 'bottom' // top, bottom
+            }
+        };
+        var self = this;
+        this.graph2d = new vis.Graph2d(this.graph, this.dataset, this.visOptions);
+        setTimeout(function(){
+            self.mouseUpHandler();
+        }, 1000);
+    }
+    
+    mouseUpHandler(){
+        this.graph2d.setOptions({height: '1px'});
+        this.graph2d.setOptions({height: this.graph.offsetHeight+'px'})
+    }
+
+    update() {
+        var now = vis.moment();
+        var range = this.graph2d.getWindow();
+        var interval = range.end - range.start;
+        if (now > range.end) {
+            this.graph2d.setWindow(now - 0.1 * interval, now + 0.9 * interval);
+        }
+        
+        var now = vis.moment();
+        this.dataset.add({
+            x: now,
+            y: this.val
+        });
+    }
+    
+    chooseFile() {
+        var self = this;
+        var chooser = document.createElement("input");
+        chooser.type = "file";
+        chooser.setAttribute("nwsaveas", "");
+        chooser.accept = ".csv";
+        chooser.addEventListener("change", function(evt) {
+            try {
+                var contents = "Unix Timestamp," + self.key + "\n";
+                for(var key in self.dataset._data){
+                    var item = self.dataset._data[key];
+                    contents += item.x.unix() + "," + item.y + "\n";
+                }
+                fs.writeFileSync(this.value, contents);
+                gui.Shell.openItem(this.value);
+            } catch(e){
+                SmartDashboard.handleError(e);
+                alert(e);
+            }
+        }, false);
+        chooser.style.display = "none";
+        chooser.click();
+    }
+    
+    createContextMenu(menu) {
+        var self = this;
+        menu.append(new gui.MenuItem({
+            label: "Export Data",
+            click: function () {
+                self.chooseFile();
+            }
+        }));
+        menu.append(new gui.MenuItem({
+            label: "Reset",
+            click: function () {
+                self.dataset.clear();
+            }
+        }));
+    }
+}
+
+SmartDashboard.registerWidget(Graph, "number");
+
 class Slider extends Widget {
     createMainElement(){
         return document.createElement("input");
@@ -170,6 +269,15 @@ class Checkbox extends Widget {
 
 SmartDashboard.registerWidget(Checkbox, "boolean");
 
+class RedGreen extends Checkbox {
+    render(){
+        super.render();
+        this.root.querySelector(".widget-input").classList.add("redgreen");
+    }
+}
+
+SmartDashboard.registerWidget(RedGreen, "boolean");
+
 class ArrayView extends Widget {
     render() {
         var sel = document.createElement("select");
@@ -300,3 +408,56 @@ class TextBox extends Widget {
 }
 
 SmartDashboard.registerWidget(TextBox, "string");
+
+class Command extends Widget {
+    render() {
+        this._commandRunning = false;
+        
+        this._button = document.createElement("button");
+        this._button.classList.add("widget-input");
+        this._button.textContent = "Start";
+        this._button.id = this._dom_id;;
+        var self = this;
+        this._button.onclick = function (evt) {
+            self.change(evt);
+        };
+        this.root.appendChild(this._button);
+        this.update();
+    }
+
+    _update(k, v) {}
+
+    attachListeners() {
+        var commandRoot = this.table.getTablePath() + "/" + this.key;
+        this._valTable = ntcore.getTable(commandRoot);
+        var self = this;
+        this._mainListener = function (k, v) {
+            if (k == "running") {
+                self._commandRunning = v;
+            }
+            self.update();
+        };
+        // ignores default for now
+        this._valTable.onChange("running", this._mainListener);
+
+        this.val = this._valTable.get("options", []);
+        this.valSelected = this._valTable.get("selected", "");
+    }
+
+    change(evt) {
+        this._commandRunning = !this._commandRunning;
+        this.table.put(this.key + "/running", this._commandRunning);
+        this.update();
+    }
+
+    update() {
+        this._button.textContent = this._commandRunning ? "Stop" : "Start";
+        if(this._commandRunning){
+            this._button.classList.add("command-running");
+        } else {
+            this._button.classList.remove("command-running");
+        }
+    }
+}
+
+SmartDashboard.registerWidget(Command, "object");

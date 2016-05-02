@@ -2,9 +2,10 @@ const gui = require('nw.gui');
 const ntcore = require('./ntcore_node');
 const fs = require('fs');
 const child_process = require("child_process");
+gui.Screen.Init();
 
 var SmartDashboard = {
-    version: "0.1.0",
+    version: gui.App.manifest.version,
     widgets: [],
     widgetTypes: {},
     editable: false,
@@ -91,6 +92,23 @@ SmartDashboard.populatePluginList = function (list) {
     }
 }
 
+SmartDashboard.getDefaultWidget = function(type){
+    var entry = SmartDashboard.options["default-" + type];
+    if(typeof entry == "undefined"){
+        var first = null;
+        for(var widgetType in SmartDashboard.widgetTypes){
+            if(first == null) first = widgetType;
+            if (!SmartDashboard.widgetTypes.hasOwnProperty(widgetType)) continue;
+            if(SmartDashboard.widgetTypes[widgetType].dataType == type){
+                return SmartDashboard.widgetTypes[widgetType];
+            }
+        }
+        return SmartDashboard.widgetTypes[first];
+    } else {
+        return SmartDashboard.widgetTypes[entry];
+    }
+}
+
 function createSdMenu() {
     var newMenu = new gui.Menu();
     for (var widgetType in SmartDashboard.widgetTypes) {
@@ -123,6 +141,13 @@ function createSdMenu() {
         click: function(){
             SmartDashboard.saveData();
             SmartDashboard.restart();
+        }
+    }));
+    sdMenu.append(new gui.MenuItem({
+        label: "Exit",
+        click: function(){
+            SmartDashboard.saveData();
+            window.close();
         }
     }));
     sdMenu.append(new gui.MenuItem({
@@ -207,17 +232,22 @@ SmartDashboard.renderEntries = function(){
             
             var el = document.createElement("li");
             var a = document.createElement("a");
+            var btn = document.createElement("button");
+            btn.classList.add("entry-add");
+            btn.textContent = "+";
             a.href = "javascript:void(0)";
             a.textContent = key;
             a.dataset.path = parentPath + key;
-            a.onclick = function(){
+            btn.onclick = function(){
                 if(this.parentElement.classList.contains("open")){
                     this.parentElement.classList.remove("open");
+                    this.textContent = "+";
                 } else {
                     this.parentElement.classList.add("open");
+                    this.textContent = "-";
                 }
             };
-            a.ondblclick = function(){
+            a.onclick = function(){
                 var nameRaw = this.dataset.path;
                 
                 var val = ntcore.getTable("").get(nameRaw);
@@ -225,12 +255,14 @@ SmartDashboard.renderEntries = function(){
                 if(widgetType == "undefined") widgetType = "object";
                 if(Array.isArray(val)) widgetType = "array";
                 
-                var widget = new SmartDashboard.widgetTypes[SmartDashboard.options["default-" + widgetType]].widget(
+                var widget = new (SmartDashboard.getDefaultWidget(widgetType)).widget(
                     nameRaw.substring(0, nameRaw.lastIndexOf("/")),
                     nameRaw.substring(nameRaw.lastIndexOf("/") + 1));
-                widget.setPosition(15, 0);
+                widget.setPosition(gui.Window.get().width / 2, gui.Window.get().height / 2);
                 SmartDashboard.addWidget(widget);
+                SmartDashboard.setEditable(true);
             };
+            el.appendChild(btn);
             el.appendChild(a);
             domRoot.appendChild(el);
             var ul = document.createElement("ul");
@@ -257,17 +289,7 @@ SmartDashboard.renderEntries = function(){
 
 SmartDashboard.init = function () {
     global.SmartDashboard = SmartDashboard;
-    var data = {
-        sdver: SmartDashboard.version,
-        widgets: [],
-        options: {}
-    };
-    try {
-        var dataStr = fs.readFileSync("save.json");
-        data = JSON.parse(dataStr);
-    } catch (e) {
-        SmartDashboard.handleError(e);
-    }
+    var data = global.data;
 
     SmartDashboard.options = data.options;
    
@@ -377,26 +399,45 @@ SmartDashboard.init = function () {
         SmartDashboard.addWidget(widget);
     }
     
-    try {
-        gui.Window.get().moveTo(SmartDashboard.options.window.x, SmartDashboard.options.window.y);
-        gui.Window.get().resizeTo(SmartDashboard.options.window.width, SmartDashboard.options.window.height);
-    } catch(e){
-        SmartDashboard.handleError(e);
-    }
-    function windowCallback(){
-        SmartDashboard.options.window = {
-            x: gui.Window.get().x,
-            y: gui.Window.get().y,
+    if(SmartDashboard.options.dsMode){
+        var screen = gui.Screen.screens[0]; // DriverStation docks to primary screen only
+        var area = screen.work_area; // work_area takes the Windows taskbar into account
+        gui.Window.get().moveTo(area.x, area.y);
+        gui.Window.get().resizeTo(area.width, area.height - 200);
+        // DriverStation is 200px height
+    } else {
+        /*try {
+            gui.Window.get().moveTo(SmartDashboard.options.window.x, SmartDashboard.options.window.y);
+            gui.Window.get().resizeTo(SmartDashboard.options.window.width, SmartDashboard.options.window.height);
+        } catch(e){
+            SmartDashboard.handleError(e);
+        }
+        function windowCallback(){
+            SmartDashboard.options.window = {
+                x: gui.Window.get().x,
+                y: gui.Window.get().y,
             width: gui.Window.get().width,
-            height: gui.Window.get().height
-        };
-        SmartDashboard.saveData();
+                height: gui.Window.get().height
+            };
+            SmartDashboard.saveData();
+        }
+        gui.Window.get().on("move", windowCallback);
+        gui.Window.get().on("resize", windowCallback);*/
     }
-    gui.Window.get().on("move", windowCallback);
-    gui.Window.get().on("resize", windowCallback);
 
     window.onbeforeunload = SmartDashboard.saveData;
     process.on('exit', SmartDashboard.saveData);
+    
+    setInterval(function(){
+        if(ntcore.isConnected()){
+            document.querySelector(".connection-status").classList.add("connected");
+        } else {
+            document.querySelector(".connection-status").classList.remove("connected");
+        }
+    }, 5000);
+    
+    if(global.initCallback) global.initCallback();
+    gui.Window.get().show();
 }
 
 SmartDashboard.saveData = function () {
@@ -582,6 +623,51 @@ class Widget {
             type: "separator"
         }));
         
+        menu.append(new gui.MenuItem({
+            label: "To Front",
+            click: function () {
+                var parent = self.dom.parentElement;
+                self.dom.remove();
+                parent.appendChild(self.dom);
+            }
+        }));
+        
+        menu.append(new gui.MenuItem({
+            label: "Forward",
+            click: function () {
+                var parent = self.dom.parentElement;
+                var next = self.dom.nextElementSibling;
+                if(typeof next != "undefined" && next != null)
+                    next = next.nextElementSibling;
+                self.dom.remove();
+                parent.insertBefore(self.dom, next);
+            }
+        }));
+        
+        menu.append(new gui.MenuItem({
+            label: "Backward",
+            click: function () {
+                var parent = self.dom.parentElement;
+                var prev = self.dom.previousElementSibling;
+                console.log(prev, self.dom);
+                self.dom.remove();
+                parent.insertBefore(self.dom, prev);
+            }
+        }));
+        
+        menu.append(new gui.MenuItem({
+            label: "To Back",
+            click: function () {
+                var parent = self.dom.parentElement;
+                self.dom.remove();
+                parent.insertBefore(self.dom, parent.children[0]);
+            }
+        }));
+        
+        menu.append(new gui.MenuItem({
+            type: "separator"
+        }));
+        
         this.createContextMenu(menu);
         return menu;
     }
@@ -613,6 +699,11 @@ class Widget {
         this.dom.style.width = w + "px";
         this.dom.style.height = h + "px";
     }
+    
+    mouseDownHandler(){
+    }
+    mouseUpHandler(){
+    }
 
     setEditable(flag) {
         var self = this;
@@ -626,15 +717,24 @@ class Widget {
                 e.preventDefault();
                 return false;
             }
-            this.dom.ondblclick = function (e) {
-                if (e.clientX - self.dom.offsetLeft > self.dom.offsetWidth - 10 && e.clientY - self.dom.offsetTop > self.dom.offsetHeight - 10) {
-                    this.style.width = this.style.height = null;
-                    self._w = this.offsetWidth;
-                    self._h = this.offsetHeight;
-                }
-            }
             this.dom.onmousedown = function (e) {
+                if(e.which == 2){
+                    if (e.clientX - self.dom.offsetLeft > self.dom.offsetWidth - 10
+                            && e.clientY - self.dom.offsetTop > self.dom.offsetHeight - 10) {
+                        this.style.width = this.style.height = null;
+                        self._w = this.offsetWidth;
+                        self._h = this.offsetHeight;
+                    }
+                    e.preventDefault();
+                    return false;
+                }
+                
+                if(e.which != 1) return;
                 self._dragging = true;
+                self.dom.classList.add("drag");
+                var parent = self.dom.parentElement;
+                self.dom.remove();
+                parent.appendChild(self.dom);
                 sx = e.clientX;
                 sy = e.clientY;
                 ox = parseInt(self.dom.style.left);
@@ -648,12 +748,16 @@ class Widget {
                     self._dragSize = false;
                 }
 
+                self.mouseDownHandler();
+                
                 e.preventDefault();
                 return false;
             }
 
             this.dom.onmouseup = function (e) {
                 self._dragging = false;
+                self.dom.classList.remove("drag");
+                self.mouseUpHandler();
                 e.preventDefault();
                 return false;
             }

@@ -7,44 +7,96 @@
     <link rel="stylesheet" href="index.css" />
     <link rel="stylesheet" id="theme-css" />
     <style>
-        body {
-            padding-bottom: 5em;
+        .caption {
+            margin: 0;
+            color: gray;
+            font-size: 0.75em;
+        }
+        
+        form {
+            height: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #container {
+            flex: 1 1 auto;
+            overflow-y: auto;
+            min-height: 0px;
+        }
+        
+        .button-pane {
+            border-top: 1px solid black;
+            width: 100%;
+            text-align: right;
         }
     </style>
 </head>
 
 <body class="options">
     <form action="javascript:void(0)" onsubmit="save()">
-        <fieldset>
-            <legend>Connection</legend>
-            <label>Remote IP: <input type="text" id="ip" class="setting restart-required" /></label><br/>
-            <label>Remote Port: <input type="number" id="port" class="setting restart-required" /></label>
-        </fieldset>
-        
-        <fieldset>
-            <legend>Default Widgets</legend>
-            <label>Array: <select id="default-array" class="widget-select setting" data-filter="array"></select></label><br/>
-            <label>Boolean: <select id="default-boolean" class="widget-select setting" data-filter="boolean"></select></label><br/>
-            <label>Number: <select id="default-number" class="widget-select setting" data-filter="number"></select></label><br/>
-            <label>Raw: <select id="default-raw" class="widget-select setting" data-filter="raw"></select></label><br/>
-            <label>String: <select id="default-string" class="widget-select setting" data-filter="string"></select></label>
-        </fieldset>
-        
-        <fieldset>
-            <legend>Theme</legend>
-            <div class="themes-view">
-                <select id="theme" class="setting"></select>
-            </div>
-        </fieldset>
-        
-        <fieldset>
-            <legend>Plugins</legend>
-            <div class="plugins-view">
-                No plugins
-            </div>
-        </fieldset>
-        
-        <div class="align-bottom text-right button-pane">
+        <div id="container">
+            <fieldset>
+                <legend>Connection</legend>
+                <label>Remote IP: <input type="text" id="ip" placeholder="10.te.am.2" class="setting restart-required" /></label><br/>
+                <label>Remote Port: <input type="number" id="port" placeholder="1735" class="setting restart-required" /></label>
+            </fieldset>
+           
+            <fieldset>
+                <legend>DriverStation mode</legend>
+                <label>Enabled: <input type="checkbox" id="dsMode" class="setting restart-required" /></label><br/>
+                <label>Use <code>--ds-mode</code> switch <input type="checkbox" id="useDsModeSwitch" class="setting" /></label>
+                <p class="caption">Removes the window border and makes the dashboard fill the entire screen above DriverStation when it's docked.</p>
+                <p class="caption" id="dsModeWarning" style="display: none;">SmartDashboard is currently launched with <code>--ds-mode</code></p>
+                <script>
+                    var inDsMode = require("nw.gui").App.argv.indexOf("--ds-mode") > -1;
+                    if(inDsMode){
+                        if(global.SmartDashboard.options.useDsModeSwitch){
+                            document.getElementById("dsMode").disabled = true;
+                        }
+                        document.getElementById("dsModeWarning").style.display = "block";
+                    }
+                    document.getElementById("useDsModeSwitch").addEventListener("change", function(e){
+                        if(e.target.checked && inDsMode){
+                            document.getElementById("dsMode").disabled = true;
+                            document.getElementById("dsMode").checked = true;
+                            restartRequired = true;
+                        } else if(inDsMode){
+                            document.getElementById("dsMode").disabled = false;
+                        }
+                    });
+                </script>
+            </fieldset>
+         
+            <fieldset>
+                <legend>Default Widgets</legend>
+                <label>Array: <select id="default-array" class="widget-select setting" data-filter="array"></select></label><br/>
+                <label>Boolean: <select id="default-boolean" class="widget-select setting" data-filter="boolean"></select></label><br/>
+                <label>Number: <select id="default-number" class="widget-select setting" data-filter="number"></select></label><br/>
+                <label>Object: <select id="default-object" class="widget-select setting" data-filter="object"></select></label><br/>
+                <label>Raw: <select id="default-raw" class="widget-select setting" data-filter="raw"></select></label> <span style="color:red;font-variant:small-caps;">unimplemented</span><br/>
+                <label>String: <select id="default-string" class="widget-select setting" data-filter="string"></select></label>
+                <p class="caption">These are the default widget types that will be added when items are clicked in the variables list. Widgets can be changed into other types using the Morph menu.</p>
+            </fieldset>
+           
+            <fieldset>
+                <legend>Theme</legend>
+                <p class="caption">Theme CSS files can be dropped into the <code>themes</code> folder.</p>
+                <div class="themes-view">
+                    <select id="theme" class="setting"></select>
+                </div>
+            </fieldset>
+         
+            <fieldset>
+                <legend>Plugins</legend>
+                <p class="caption">Plugin JS files can be dropped into the <code>plugins</code> folder.</p>
+                <div class="plugins-view">
+                    No plugins
+                </div>
+            </fieldset>
+        </div>
+        <div class="button-pane">
             <button type="submit">Save</button>
             <button type="button" onclick="cancel()">Cancel</button>
         </div>
@@ -64,7 +116,11 @@
         };
         
         [].forEach.call(document.querySelectorAll(".setting"), function(el){
-            el.value = global.SmartDashboard.options[el.id];
+            if(el.type == "checkbox" || el.type == "radio"){
+                el.checked = global.SmartDashboard.options[el.id] || false;
+            } else {
+                el.value = global.SmartDashboard.options[el.id];
+            }
             if(el.classList.contains("restart-required")){
                 el.addEventListener("change", function(){
                     restartRequired = true;
@@ -78,12 +134,16 @@
         }
         function save(){
             [].forEach.call(document.querySelectorAll(".setting"), function(el){
-                global.SmartDashboard.options[el.id] = el.value;
+                if(el.type == "checkbox" || el.type == "radio"){
+                    global.SmartDashboard.options[el.id] = el.checked;
+                } else {
+                    global.SmartDashboard.options[el.id] = el.value;
+                }
             });
             global.SmartDashboard.setTheme(global.SmartDashboard.options.theme);
             global.SmartDashboard.setTheme(global.SmartDashboard.options.theme, document.querySelector("#theme-css"));
             global.SmartDashboard.saveData();
-            if(restartRequired && confirm("Restart required for changes to take effect. Restart Now?")){
+            if(restartRequired && confirm("Restart required for changes to take effect. Restart now?")){
                 global.SmartDashboard.restart();
             } else {
                 window.close();
