@@ -5,7 +5,9 @@
     <meta charset="UTF-8" />
     <title>SmartDashboard.js - Properties</title>
     <link rel="stylesheet" href="index.css" />
-    <link rel="stylesheet" id="theme-css" />
+    <script>
+        document.write('<link rel="stylesheet" id="theme-css" href="' + global.SmartDashboard.getThemeLocation() + '"/>');
+    </script>
     <style>
         form {
             height: 100%;
@@ -40,18 +42,16 @@
         </div>
     </form>
     <script>
-        global.SmartDashboard.setTheme(global.SmartDashboard.options.theme, document.querySelector("#theme-css"));
-        
         window.addField = function(name, type, def, callback){
             var label = document.createElement("label");
             label.textContent = name + ": ";
             var inp = document.createElement("input");
             inp.value = def;
-            inp.onchange = (function(name){
+            inp.onchange = (function(name, cb){
                 return function(e){
-                    callback(name, e.target.value);
+                    cb(name, e.target.value);
                 };
-            })(name);
+            })(name, callback);
             label.appendChild(inp);
             document.querySelector(".form-items").appendChild(label);
             document.querySelector(".form-items").appendChild(document.createElement("br"));

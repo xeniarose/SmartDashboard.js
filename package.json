@@ -8,8 +8,8 @@
     "title": "SmartDashboard",
     "icon": "assets/favicon.png",
     "frame": false,
-    "width": 200,
-    "height": 10,
+    "width": 300,
+    "height": 20,
     "position": "center",
     "transparent": false
   },

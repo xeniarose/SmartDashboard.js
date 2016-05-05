@@ -5,7 +5,10 @@
     <meta charset="UTF-8" />
     <title>SmartDashboard.js - Options</title>
     <link rel="stylesheet" href="index.css" />
-    <link rel="stylesheet" id="theme-css" />
+    <script>
+        // major hacks to disable the animation
+        document.write('<link rel="stylesheet" id="theme-css" href="' + global.SmartDashboard.getThemeLocation() + '"/>');
+    </script>
     <style>
         .caption {
             margin: 0;
@@ -31,6 +34,13 @@
             width: 100%;
             text-align: right;
         }
+        
+        h3 {
+            font-size: 1em;
+            border-bottom: 1px solid gray;
+            margin-bottom: 0;
+            margin-top: 0.2em;
+        }
     </style>
 </head>
 
@@ -44,9 +54,10 @@
             </fieldset>
            
             <fieldset>
-                <legend>DriverStation mode</legend>
+                <legend>DriverStation Integration</legend>
+                <h3>DriverStation Mode:</h3>
                 <label>Enabled: <input type="checkbox" id="dsMode" class="setting restart-required" /></label><br/>
-                <label>Use <code>--ds-mode</code> switch <input type="checkbox" id="useDsModeSwitch" class="setting" /></label>
+                <label>Enable when launched from DriverStation <input type="checkbox" id="useDsModeSwitch" class="setting" /></label>
                 <p class="caption">Removes the window border and makes the dashboard fill the entire screen above DriverStation when it's docked.</p>
                 <p class="caption" id="dsModeWarning" style="display: none;">SmartDashboard is currently launched with <code>--ds-mode</code></p>
                 <script>
@@ -66,6 +77,17 @@
                             document.getElementById("dsMode").disabled = false;
                         }
                     });
+                </script>
+                <h3>Default Dashboard:</h3>
+                <label><input type="radio" name="ds-toggle" class="ds-default-toggle toggle-on" /> SmartDashboard.js</label><br/>
+                <label><input type="radio" name="ds-toggle" class="ds-default-toggle toggle-off" /> LabVIEW Dashboard</label><br/>
+                <p class="caption">The default dashboard is what DriverStation launches when you choose "Default" in the dashboard selector. Close DriverStation before changing.</p>
+                <script>
+                    if(global.SmartDashboard.isDefaultDashboard()){
+                        document.querySelector(".ds-default-toggle.toggle-on").checked = true;
+                    } else {
+                        document.querySelector(".ds-default-toggle.toggle-off").checked = true;
+                    }
                 </script>
             </fieldset>
          
@@ -103,7 +125,6 @@
     </form>
     <script>
         var restartRequired = false;
-        global.SmartDashboard.setTheme(global.SmartDashboard.options.theme, document.querySelector("#theme-css"));
         [].forEach.call(document.querySelectorAll(".widget-select"), function(el){
             global.SmartDashboard.populateWidgetSelect(el);
         });
@@ -140,6 +161,9 @@
                     global.SmartDashboard.options[el.id] = el.value;
                 }
             });
+            
+            global.SmartDashboard.setDefaultDashboard(document.querySelector(".ds-default-toggle.toggle-on").checked);
+            
             global.SmartDashboard.setTheme(global.SmartDashboard.options.theme);
             global.SmartDashboard.setTheme(global.SmartDashboard.options.theme, document.querySelector("#theme-css"));
             global.SmartDashboard.saveData();

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>SmartDashboard.js - About</title>
+    <link rel="stylesheet" href="index.css" />
+    <script>
+        // epic hacks to disable the animation
+        document.write('<link rel="stylesheet" id="theme-css" href="' + global.SmartDashboard.getThemeLocation() + '"/>');
+    </script>
+</head>
+
+<body>
+    <h1>SmartDashboard.js <span class="version"></span></h1>
+    <p></p>
+    <script>
+        document.querySelector(".version").textContent = global.SmartDashboard.version;
+    </script>
+</body>
+</html>

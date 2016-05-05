@@ -73,6 +73,10 @@ SmartDashboard.setTheme = function(theme, link){
     }
 }
 
+SmartDashboard.getThemeLocation = function(){
+    return "themes/" + SmartDashboard.options.theme + ".css";
+}
+
 SmartDashboard.populatePluginList = function (list) {
     list.innerHTML = "";
     for (plugin of SmartDashboard.plugins) {
@@ -90,6 +94,38 @@ SmartDashboard.populatePluginList = function (list) {
     if (SmartDashboard.plugins.length == 0) {
         list.innerHTML = "No plugins";
     }
+}
+
+SmartDashboard.isRectIntersecting = function(r1, r2){
+    function isPointContained(val, left, right){
+        return val > left && val < right;
+    }
+    return (
+        isPointContained(r1.left, r2.left, r2.right) ||
+        isPointContained(r1.right, r2.left, r2.right) ||
+        isPointContained(r2.left, r1.left, r1.right) ||
+        isPointContained(r2.right, r1.left, r1.right)
+    ) && (
+        isPointContained(r1.top, r2.top, r2.bottom) ||
+        isPointContained(r1.bottom, r2.top, r2.bottom) ||
+        isPointContained(r2.top, r1.top, r1.bottom) ||
+        isPointContained(r2.bottom, r1.top, r1.bottom)
+    );
+}
+
+SmartDashboard.findIntersectingContainer = function(widget, blacklist){
+    blacklist = blacklist || [];
+    blacklist.push(widget);
+    var wRect = widget.dom.getBoundingClientRect();
+    for(var container of SmartDashboard.widgets){
+        if(!container.addChild || blacklist.indexOf(container) > -1) continue;
+        
+        var cRect = container.dom.getBoundingClientRect();
+        if(SmartDashboard.isRectIntersecting(wRect, cRect)){
+            return container;
+        }
+    }
+    return null;
 }
 
 SmartDashboard.getDefaultWidget = function(type){
@@ -111,20 +147,31 @@ SmartDashboard.getDefaultWidget = function(type){
 
 function createSdMenu() {
     var newMenu = new gui.Menu();
+    var typesList = [];
     for (var widgetType in SmartDashboard.widgetTypes) {
         if (!SmartDashboard.widgetTypes.hasOwnProperty(widgetType)) continue;
+        typesList.push(widgetType);
+    }
+    typesList.sort();
+    
+    for(var widgetType of typesList){
         (function (widgetType) {
             newMenu.append(new gui.MenuItem({
                 label: widgetType,
                 click: function () {
                     setTimeout(function () {
-                        var nameRaw = prompt("SmartDashboard variable:");
-                        if (nameRaw == null || nameRaw == "")
-                            return;
+                        var isContainer = SmartDashboard.widgetTypes[widgetType].dataType == "container";
+                        var nameRaw = "";
+                        if(!isContainer){
+                            nameRaw = prompt("SmartDashboard variable:");
+                            if (nameRaw == null || nameRaw == "")
+                                return;
+                        }
                         var widget = new SmartDashboard.widgetTypes[widgetType].widget(nameRaw.substring(0, nameRaw.lastIndexOf("/")),
                             nameRaw.substring(nameRaw.lastIndexOf("/") + 1));
-                        widget.setPosition(15, 0);
-                        SmartDashboard.addWidget(widget);
+                        if(widget.onNew) widget.onNew();
+                        SmartDashboard.setEditable(true);
+                        SmartDashboard.positionWidget(widget);
                     }, 1);
                 }
             }));
@@ -135,6 +182,14 @@ function createSdMenu() {
     sdMenu.append(new gui.MenuItem({
         label: "SmartDashboard.js " + SmartDashboard.version,
         enabled: false
+    }));
+    sdMenu.append(new gui.MenuItem({
+        label: "About",
+        click: function(){
+            gui.Window.open('about.html', {
+                position: 'center'
+            });
+        }
     }));
     sdMenu.append(new gui.MenuItem({
         label: "Restart",
@@ -197,6 +252,28 @@ SmartDashboard.restart = function () {
     chrome.runtime.reload();
 }
 
+SmartDashboard.isDefaultDashboard = function(){
+    var dsIni = fs.readFileSync("C:\\Users\\Public\\Documents\\FRC\\FRC DS Data Storage.ini").toString();
+    var line = dsIni.match(/DashboardCmdLine[^\r\n]*\r\n/);
+    return line != null && line[0].indexOf("ds.bat") > -1;
+}
+
+SmartDashboard.setDefaultDashboard = function(isSdJs){
+    var run;
+    if(isSdJs){
+        var sdDir = process.cwd();
+        var nwjs = process.execPath;
+        fs.writeFileSync("ds.bat", "\"" + nwjs + "\" \"" + sdDir + "\" --ds-mode %*");
+        run = sdDir + "\\ds.bat";
+        run = "\"\"" + run.replace(/\\/g, "\\\\") + "\"\"";
+    } else {
+        run = "\"\"C:\\Program Files (x86)\\FRC Dashboard\\Dashboard.exe\"\"";
+    }
+    var dsIni = fs.readFileSync("C:\\Users\\Public\\Documents\\FRC\\FRC DS Data Storage.ini").toString();
+    dsIni = dsIni.replace(/DashboardCmdLine[^\r\n]*\r\n/, "DashboardCmdLine = " + run + "\r\n");
+    fs.writeFileSync("C:\\Users\\Public\\Documents\\FRC\\FRC DS Data Storage.ini", dsIni);
+}
+
 SmartDashboard.entriesTree = function(){
     var rawEntries = ntcore.getAllEntries();
     var root = {};
@@ -214,6 +291,16 @@ SmartDashboard.entriesTree = function(){
     }
     
     return root;
+}
+
+SmartDashboard.positionWidget = function(widget){
+    var screen = document.querySelector("#place-screen");
+    screen.onclick = function(e){
+        widget.setPosition(e.clientX + document.body.scrollLeft, e.clientY + document.body.scrollTop);
+        SmartDashboard.addWidget(widget);
+        screen.classList.remove("active");
+    };
+    screen.classList.add("active");
 }
 
 SmartDashboard.renderEntries = function(){
@@ -255,12 +342,12 @@ SmartDashboard.renderEntries = function(){
                 if(widgetType == "undefined") widgetType = "object";
                 if(Array.isArray(val)) widgetType = "array";
                 
+                SmartDashboard.setEditable(true);
+                
                 var widget = new (SmartDashboard.getDefaultWidget(widgetType)).widget(
                     nameRaw.substring(0, nameRaw.lastIndexOf("/")),
                     nameRaw.substring(nameRaw.lastIndexOf("/") + 1));
-                widget.setPosition(gui.Window.get().width / 2, gui.Window.get().height / 2);
-                SmartDashboard.addWidget(widget);
-                SmartDashboard.setEditable(true);
+                SmartDashboard.positionWidget(widget);
             };
             el.appendChild(btn);
             el.appendChild(a);
@@ -357,6 +444,17 @@ SmartDashboard.init = function () {
         menu.popup(ev.x, ev.y);
         return false;
     }
+    
+    document.querySelector("#dashboard").ondblclick = function(e){
+        if(e.target != this) return;
+        for(var item of SmartDashboard.widgets){
+            if(item != this && item.editing)
+                item.setEditing(false);
+        }
+        SmartDashboard.resetClass("not-editing");
+    };
+    
+    
 
     console.info("Loading plugins");
     try {
@@ -388,15 +486,27 @@ SmartDashboard.init = function () {
     if (data.sdver != SmartDashboard.version) {
         console.warn("Save version doesn't match SmartDashboard version");
     }
+    
+    function loadWidget(wData){
+        var widget = new SmartDashboard.widgetTypes[wData.type].widget(wData.table, wData.key, wData.data);
+        widget.setPosition(wData.x, wData.y, wData.w, wData.h);
+        SmartDashboard.addWidget(widget);
+        
+        if(wData.children){
+            for (var childData of wData.children){
+                var childWidget = loadWidget(childData);
+                widget.addChild(childWidget, true);
+            }
+        }
+        return widget;
+    };
 
     for (var wData of data.widgets) {
         if (!SmartDashboard.widgetTypes.hasOwnProperty(wData.type)) {
             console.warn("No widget for:", wData.type);
             continue;
         }
-        var widget = new SmartDashboard.widgetTypes[wData.type].widget(wData.table, wData.key, wData.data);
-        widget.setPosition(wData.x, wData.y, wData.w, wData.h);
-        SmartDashboard.addWidget(widget);
+        loadWidget(wData);
     }
     
     if(SmartDashboard.options.dsMode){
@@ -436,8 +546,10 @@ SmartDashboard.init = function () {
         }
     }, 5000);
     
-    if(global.initCallback) global.initCallback();
-    gui.Window.get().show();
+    setTimeout(function(){
+        if(global.initCallback) global.initCallback();
+        gui.Window.get().show();
+    }, 500); // wait for things to load a bit
 }
 
 SmartDashboard.saveData = function () {
@@ -445,7 +557,12 @@ SmartDashboard.saveData = function () {
         sdver: SmartDashboard.version,
         widgets: []
     }
-    for (var widget of SmartDashboard.widgets) {
+    
+    var topLevelWidgets = Array.prototype.map.call(document.querySelector("#dashboard").children, function(el){
+        return el.parentWidget;
+    });
+    
+    function saveWidget(widget, data) {
         var wPos = widget.getPosition();
         var wData = {
             x: wPos.x,
@@ -457,8 +574,19 @@ SmartDashboard.saveData = function () {
             key: widget.key,
             data: widget.saveData || {}
         };
-        data.widgets.push(wData);
+        data.push(wData);
+        if(widget.getChildren){
+            wData.children = [];
+            for(var childWidget of widget.getChildren()){
+                saveWidget(childWidget, wData.children);
+            }
+        }
+    };
+    
+    for(var widget of topLevelWidgets){
+        saveWidget(widget, data.widgets);
     }
+    
     data.options = SmartDashboard.options;
     data = JSON.stringify(data);
     fs.writeFileSync("save.json", data);
@@ -468,6 +596,15 @@ SmartDashboard.setEditable = function (flag) {
     SmartDashboard.editable = flag;
     for (var widget of SmartDashboard.widgets) {
         widget.setEditable(flag);
+    }
+    
+    SmartDashboard.resetClass("not-editing");
+}
+
+SmartDashboard.resetClass = function(className){
+    var resetContainers = document.querySelectorAll("." + className);
+    for(var i = 0; i < resetContainers.length; i++){
+        resetContainers[i].classList.remove(className);
     }
 }
 
@@ -482,6 +619,7 @@ SmartDashboard.addWidget = function (widget) {
 
 SmartDashboard.removeWidget = function (widget) {
     widget.dom.remove();
+    widget.destroy();
     var index = this.widgets.indexOf(widget);
     if (index > -1) {
         this.widgets.splice(index, 1);
@@ -554,6 +692,10 @@ class Widget {
                             widget.setPosition(pos.x, pos.y, pos.w, pos.h);
                             SmartDashboard.removeWidget(self);
                             SmartDashboard.addWidget(widget);
+                            widget.resetSize();
+                            if(self.parent){
+                                self.parent.addChild(widget, true);
+                            }
                         }, 1);
                     }
                 }));
@@ -579,6 +721,9 @@ class Widget {
                     widget.setPosition(pos.x, pos.y, pos.w, pos.h);
                     widget.saveData = self.saveData;
                     SmartDashboard.addWidget(widget);
+                    if(self.parent){
+                        self.parent.addChild(widget, true);
+                    }
                 }, 1);
             }
         }));
@@ -669,7 +814,42 @@ class Widget {
         }));
         
         this.createContextMenu(menu);
+        
+        menu.append(new gui.MenuItem({
+            type: "separator"
+        }));
+        
+        menu.append(new gui.MenuItem({
+            label: "Properties",
+            click: function () {
+                gui.Window.open("blank.html", {}, function (w) {
+                    var win = w.window;
+                    w.on("loaded", function () {
+                        var cb = function (k, v) {
+                            var pos = self.getPosition();
+                            pos[k] = parseFloat(v);
+                            self.setPosition(pos.x, pos.y, pos.w, pos.h);
+                            self._w = self.dom.offsetWidth;
+                            self._h = self.dom.offsetHeight;
+                        };
+                        var pos = self.getPosition();
+                        win.addField("x", "number", pos.x, cb);
+                        win.addField("y", "number", pos.y, cb);
+                        win.addField("w", "number", pos.w, cb);
+                        win.addField("h", "number", pos.h, cb);
+                        if(self.parent) self.parent.getPropertiesFromParent(win, self);
+                        
+                        self.createPropertiesView(win);
+                    });
+                });
+            }
+        }));
+        
         return menu;
+    }
+    
+    createPropertiesView(win){
+        
     }
 
     createContextMenu(menu) {
@@ -704,6 +884,12 @@ class Widget {
     }
     mouseUpHandler(){
     }
+    
+    resetSize(){
+        this.dom.style.width = this.dom.style.height = null;
+        this._w = this.dom.offsetWidth;
+        this._h = this.dom.offsetHeight;
+    }
 
     setEditable(flag) {
         var self = this;
@@ -712,7 +898,7 @@ class Widget {
         if (flag) {
             this._dragging = false;
             this._dragSize = false;
-            var sx, sy, ox, oy;
+            var sx, sy, ox, oy, ow, oh;
             this.dom.onmouseover = this.dom.onmouseout = function (e) {
                 e.preventDefault();
                 return false;
@@ -721,28 +907,37 @@ class Widget {
                 if(e.which == 2){
                     if (e.clientX - self.dom.offsetLeft > self.dom.offsetWidth - 10
                             && e.clientY - self.dom.offsetTop > self.dom.offsetHeight - 10) {
-                        this.style.width = this.style.height = null;
-                        self._w = this.offsetWidth;
-                        self._h = this.offsetHeight;
+                        self.resetSize();
                     }
                     e.preventDefault();
                     return false;
                 }
                 
                 if(e.which != 1) return;
+                if(e.detail > 1) return;
+                if(self.dom.classList.contains("not-editing")) return;
                 self._dragging = true;
                 self.dom.classList.add("drag");
-                var parent = self.dom.parentElement;
-                self.dom.remove();
-                parent.appendChild(self.dom);
+                if(!self.parent || (self.parent && self.parent.getDragMode() == "position")){
+                    var parent = self.dom.parentElement;
+                    self.dom.remove();
+                    parent.appendChild(self.dom);
+                } else if(self.parent.getDragMode() == "order"){
+                    self.dom.classList.add("hl");
+                }
+                
                 sx = e.clientX;
                 sy = e.clientY;
                 ox = parseInt(self.dom.style.left);
                 oy = parseInt(self.dom.style.top);
+                ow = self.dom.offsetWidth;
+                oh = self.dom.offsetHeight;
                 if (isNaN(ox)) ox = 0;
                 if (isNaN(oy)) oy = 0;
 
-                if (sx - self.dom.offsetLeft > self.dom.offsetWidth - 10 && sy - self.dom.offsetTop > self.dom.offsetHeight - 10) {
+                var rect = self.dom.getBoundingClientRect();
+                
+                if (e.clientX - rect.left > rect.width - 10 && e.clientY - rect.top > rect.height - 10) {
                     self._dragSize = true;
                 } else {
                     self._dragSize = false;
@@ -757,6 +952,23 @@ class Widget {
             this.dom.onmouseup = function (e) {
                 self._dragging = false;
                 self.dom.classList.remove("drag");
+                
+                SmartDashboard.resetClass("drop-target");
+                SmartDashboard.resetClass("remove-target");
+                SmartDashboard.resetClass("hl");
+                
+                if(!self._dragSize && e.which == 1 && !e.shiftKey){
+                    var hoverContainer = self._widgetIntersect();
+                    if(hoverContainer){
+                        hoverContainer.addChild(self);
+                    } else if(self.parent) {
+                        var pRect = self.parent.dom.getBoundingClientRect();
+                        if((e.clientX < pRect.left || e.clientX > pRect.right) || (e.clientY < pRect.top || e.clientY > pRect.bottom)){
+                            self.parent.removeChild(self);
+                        }
+                    }
+                }
+                
                 self.mouseUpHandler();
                 e.preventDefault();
                 return false;
@@ -764,16 +976,67 @@ class Widget {
 
             this.dom.onmousemove = function (e) {
                 if (self._dragging) {
+                    //console.log(e.screenX, e.screenY, e.clientX, e.clientY);
                     if (self._dragSize) {
-                        this.style.width = (e.clientX - this.offsetLeft + 5) + "px";
-                        this.style.height = (e.clientY - this.offsetTop + 5) + "px";
+                        this.style.width = (e.clientX - sx + ow + 5) + "px";
+                        this.style.height = (e.clientY - sy + oh + 5) + "px";
                         self._w = this.offsetWidth;
                         self._h = this.offsetHeight;
                     } else {
-                        this.style.left = ((e.clientX - sx) + ox) + "px";
-                        this.style.top = ((e.clientY - sy) + oy) + "px";
+                        if(!self.parent || (self.parent && self.parent.getDragMode() == "position")){
+                            this.style.left = ((e.clientX - sx) + ox) + "px";
+                            this.style.top = ((e.clientY - sy) + oy) + "px";
+                        } else if(self.parent.getDragMode() == "order") {
+                            var children = self.parent.getChildren();
+                            var closestChild = null;
+                            var closestDist = Number.MAX_VALUE;
+                            var closestChildRect;
+                            for(var child of children){
+                                var cRect = child.dom.getBoundingClientRect();
+                                
+                                var dx = Math.abs(e.clientX - (cRect.left + cRect.width / 2));
+                                var dy = Math.abs(e.clientY - (cRect.top + cRect.height / 2));
+                                var dist = dx * dx + dy * dy;
+                                if(dist > 0){
+                                    if(dist < closestDist){
+                                        closestDist = dist;
+                                        closestChild = child;
+                                        closestChildRect = cRect;
+                                    }
+                                }
+                            }
+                            if(closestChild != null && closestChild != self){
+                                var parentEl = self.dom.parentElement;
+                                if(parentEl != null){
+                                    var dx = e.clientX - (closestChildRect.left + closestChildRect.width / 2);
+                                    var dy = e.clientY - (closestChildRect.top + closestChildRect.height / 2);
+                                    if(dx < 0){
+                                        self.dom.remove();
+                                        parentEl.insertBefore(self.dom, closestChild.dom);
+                                    } else {
+                                        self.dom.remove();
+                                        parentEl.insertBefore(self.dom, closestChild.dom.nextElementSibling);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                
+                    if(!self._dragSize && !e.shiftKey){
+                        var hoverContainer = self._widgetIntersect();
+                        SmartDashboard.resetClass("drop-target");
+                        SmartDashboard.resetClass("remove-target");
+                        if(hoverContainer){
+                            hoverContainer.dom.classList.add("drop-target");
+                        } else if(self.parent) {
+                            var pRect = self.parent.dom.getBoundingClientRect();
+                            if((e.clientX < pRect.left || e.clientX > pRect.right) || (e.clientY < pRect.top || e.clientY > pRect.bottom)){
+                                self.parent.dom.classList.add("remove-target");
+                            }
+                        }
                     }
                 }
+                
                 e.preventDefault();
                 return false;
             }
@@ -783,8 +1046,25 @@ class Widget {
             this.dom.onmousemove = null;
             this.dom.onmouseover = null;
             this.dom.onmouseout = null;
-            this.dom.ondblclick = null;
         }
+    }
+    
+    _widgetIntersect(){
+        var blacklist = [];
+        function addChildren(node){
+            if(!node.getChildren) return;
+            for(var child of node.getChildren()){
+                blacklist.push(child);
+                addChildren(child);
+            }
+        }
+        addChildren(this);
+        var parent = this.parent;
+        while(parent){
+            blacklist.push(parent);
+            parent = parent.parent;
+        }
+        return SmartDashboard.findIntersectingContainer(this, blacklist);
     }
 
     attachListeners() {
@@ -824,5 +1104,307 @@ class Widget {
     render() {
         this.root.textContent = this.key + ": " + this.val;
     }
+    
+    destroy(){
+        
+    }
 }
 global.Widget = Widget;
+
+class Container {
+    constructor(table, key, saveData){
+        this.dom = document.createElement("div");
+        this.dom.classList.add("container");
+        this.dom.classList.add("container-" + this.constructor.name);
+        this.dom.parentWidget = this;
+        this.editable = false;
+        this.saveData = saveData || {};
+        this.editing = false;
+        var self = this;
+        this.dom.ondblclick = function(e){
+            return self.doubleClickHandler(e);
+        };
+        this.table = {
+            getTablePath: function(){
+                return "";
+            }
+        };
+        this.key = "";
+        this.restoreSave();
+    }
+    
+    restoreSave(){
+        
+    }
+    
+    getDragMode(){
+        return "position";
+    }
+    
+    _createContextMenu(){
+        var self = this;
+        var menu = new gui.Menu();
+        menu.append(new gui.MenuItem({
+            label: this.constructor.name,
+            enabled: false
+        }));
+        menu.append(new gui.MenuItem({
+            type: "separator"
+        }));
+        menu.append(new gui.MenuItem({
+            label: "Delete",
+            click: function () {
+                self.remove();
+            }
+        }));
+
+        /*var morphMenu = new gui.Menu();
+        var self = this;
+        for (var widgetType in SmartDashboard.widgetTypes) {
+            if (!SmartDashboard.widgetTypes.hasOwnProperty(widgetType)) continue;
+            if(widgetType == this.constructor.name) continue;
+            if(SmartDashboard.widgetTypes[widgetType].dataType != SmartDashboard.widgetTypes[this.constructor.name].dataType) continue;
+            (function (widgetType) {
+                morphMenu.append(new gui.MenuItem({
+                    label: widgetType,
+                    click: function () {
+                        setTimeout(function () {
+                            var pos = self.getPosition();
+                            var widget = new SmartDashboard.widgetTypes[widgetType].widget(self.table.getTablePath(), self.key);
+                            widget.setPosition(pos.x, pos.y, pos.w, pos.h);
+                            SmartDashboard.removeWidget(self);
+                            SmartDashboard.addWidget(widget);
+                            widget.resetSize();
+                            if(self.parent){
+                                self.parent.addChild(widget, true);
+                            }
+                        }, 1);
+                    }
+                }));
+            })(widgetType);
+        }
+
+        menu.append(new gui.MenuItem({
+            label: "Morph",
+            submenu: morphMenu
+        }));*/
+
+        menu.append(new gui.MenuItem({
+            type: "separator"
+        }));
+        
+        menu.append(new gui.MenuItem({
+            label: "To Front",
+            click: function () {
+                var parent = self.dom.parentElement;
+                self.dom.remove();
+                parent.appendChild(self.dom);
+            }
+        }));
+        
+        menu.append(new gui.MenuItem({
+            label: "Forward",
+            click: function () {
+                var parent = self.dom.parentElement;
+                var next = self.dom.nextElementSibling;
+                if(typeof next != "undefined" && next != null)
+                    next = next.nextElementSibling;
+                self.dom.remove();
+                parent.insertBefore(self.dom, next);
+            }
+        }));
+        
+        menu.append(new gui.MenuItem({
+            label: "Backward",
+            click: function () {
+                var parent = self.dom.parentElement;
+                var prev = self.dom.previousElementSibling;
+                console.log(prev, self.dom);
+                self.dom.remove();
+                parent.insertBefore(self.dom, prev);
+            }
+        }));
+        
+        menu.append(new gui.MenuItem({
+            label: "To Back",
+            click: function () {
+                var parent = self.dom.parentElement;
+                self.dom.remove();
+                parent.insertBefore(self.dom, parent.children[0]);
+            }
+        }));
+        
+        menu.append(new gui.MenuItem({
+            type: "separator"
+        }));
+        
+        this.createContextMenu(menu);
+        
+        menu.append(new gui.MenuItem({
+            type: "separator"
+        }));
+        
+        menu.append(new gui.MenuItem({
+            label: "Properties",
+            click: function () {
+                gui.Window.open("blank.html", {}, function (w) {
+                    var win = w.window;
+                    w.on("loaded", function () {
+                        var cb = function (k, v) {
+                            var pos = self.getPosition();
+                            pos[k] = parseFloat(v);
+                            self.setPosition(pos.x, pos.y, pos.w, pos.h);
+                            self._w = self.dom.offsetWidth;
+                            self._h = self.dom.offsetHeight;
+                        };
+                        var pos = self.getPosition();
+                        win.addField("x", "number", pos.x, cb);
+                        win.addField("y", "number", pos.y, cb);
+                        win.addField("w", "number", pos.w, cb);
+                        win.addField("h", "number", pos.h, cb);
+                        if(self.parent) self.parent.getPropertiesFromParent(win, self);
+                        
+                        self.createPropertiesView(win);
+                    });
+                });
+            }
+        }));
+        
+        return menu;
+    }
+    
+    createPropertiesView(win){
+        
+    }
+    
+    createContextMenu(menu){
+        
+    }
+    
+    remove() {
+        function removeChildren(el){
+            SmartDashboard.removeWidget(el);
+            if(el.getChildren){
+                for(var child of el.getChildren()){
+                    removeChildren(child);
+                }
+            }
+        }
+        
+        removeChildren(this);
+    }
+    
+    setEditable(flag){
+        this.setEditing(false);
+        this._setEditable(flag);
+    }
+    
+    _setEditable(flag){
+        Widget.prototype.setEditable.call(this, flag); // hacks! make widget and container both inherit from a parent class
+    }
+    
+    _widgetIntersect(){
+        return Widget.prototype._widgetIntersect.call(this);
+    }
+    
+    resetSize(){
+        Widget.prototype.resetSize.call(this)
+    }
+    
+    getPosition() {
+        return Widget.prototype.getPosition.call(this);
+    }
+
+    setPosition(x, y, w, h) {
+        Widget.prototype.setPosition.call(this, x, y, w, h);
+    }
+    
+    mouseDownHandler(){
+    }
+    mouseUpHandler(){
+    }
+    
+    render(){
+        
+    }
+    
+    doubleClickHandler(e){
+        if(e.target != this.dom || !SmartDashboard.editable) return;
+        this.setEditing(!this.editing);
+        e.preventDefault();
+        return false;
+    }
+    
+    setEditing(flag){
+        this.editing = flag;
+        this.dom.dataset.editing = "" + flag;
+        SmartDashboard.resetClass("not-editing");
+        if(flag){
+            for(var item of SmartDashboard.widgets){
+                if(item != this && item.editing)
+                    item.setEditing(false);
+            }
+            
+            var el = this.dom.parentElement;
+            do {
+                el.classList.add("not-editing");
+                el = el.parentElement;
+            } while(el != document.body && el != null);
+        }
+        if(SmartDashboard.editable){
+            this._setEditable(!flag);
+        }
+    }
+    
+    getChildren(){
+        return Array.prototype.map.call(this.dom.children, function(el){
+            return el.parentWidget;
+        });
+    }
+    
+    addChild(child, positionIsCorrect){
+        var childPos = child.getPosition();
+        var thisPos = this.getPosition();
+        if(!positionIsCorrect){
+            childPos.x -= thisPos.x;
+            childPos.y -= thisPos.y;
+            if(childPos.x < 0) childPos.x = 0;
+            if(childPos.y < 0) childPos.y = 0;
+        }
+        child.dom.remove();
+        child.parent = this;
+        this.dom.appendChild(child.dom);
+        child.setPosition(childPos.x, childPos.y, childPos.w, childPos.h);
+    }
+    
+    removeChild(child, positionIsCorrect){
+        var childPos = child.getPosition();
+        var thisPos = this.getPosition();
+        childPos.x += thisPos.x;
+        childPos.y += thisPos.y;
+        child.dom.remove();
+        if(this.parent){
+            this.parent.dom.appendChild(child.dom);
+            child.parent = this.parent;
+        } else {
+            document.querySelector("#dashboard").appendChild(child.dom);
+            delete child.parent;
+        }
+        child.setPosition(childPos.x, childPos.y, childPos.w, childPos.h);
+        this.restoreSaveFromParent(child);
+    }
+    
+    getPropertiesFromParent(win, self){
+        
+    }
+    
+    restoreSaveFromParent(self){
+        
+    }
+    
+    destroy(){
+        
+    }
+}
+global.Container = Container;
+SmartDashboard.registerWidget(Container, "container");

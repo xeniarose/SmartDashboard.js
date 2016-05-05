@@ -59,6 +59,16 @@ class Graph extends Widget {
         }, 1000);
     }
     
+    setEditable(editable){
+        super.setEditable(editable);
+        this.mouseUpHandler();
+    }
+    
+    setPosition(x, y, w, h){
+        super.setPosition(x, y, w, h);
+        this.mouseUpHandler();
+    }
+    
     mouseUpHandler(){
         this.graph2d.setOptions({height: '1px'});
         this.graph2d.setOptions({height: this.graph.offsetHeight+'px'})
@@ -77,6 +87,10 @@ class Graph extends Widget {
             x: now,
             y: this.val
         });
+    }
+    
+    destroy(){
+        this.graph2d.destroy();
     }
     
     chooseFile() {
@@ -154,26 +168,15 @@ class Slider extends Widget {
         }
     }
 
-    createContextMenu(menu) {
-        var self = this;
-        menu.append(new gui.MenuItem({
-            label: "Properties",
-            click: function () {
-                gui.Window.open("blank.html", {}, function (w) {
-                    var win = w.window;
-                    w.on("loaded", function () {
-                        var cb = function (k, v) {
-                            self.saveData[k] = v;
-                            self.root.querySelector(".widget-input")[k] = v;
-                            self.update();
-                        };
-                        for (var item of self.getEditableProperties()) {
-                            win.addField(item, "number", self.root.querySelector(".widget-input")[item], cb);
-                        }
-                    });
-                });
-            }
-        }));
+    createPropertiesView(win){
+        var cb = function (k, v) {
+            self.saveData[k] = v;
+            self.root.querySelector(".widget-input")[k] = v;
+            self.update();
+        };
+        for (var item of self.getEditableProperties()) {
+            win.addField(item, "number", self.root.querySelector(".widget-input")[item], cb);
+        }
     }
 
     change(evt) {
@@ -461,3 +464,60 @@ class Command extends Widget {
 }
 
 SmartDashboard.registerWidget(Command, "object");
+
+class FlowContainer extends Container {
+    getDragMode(){
+        return "order";
+    }
+}
+
+SmartDashboard.registerWidget(FlowContainer, "container");
+
+class FlexContainer extends Container {
+    getDragMode(){
+        return "order";
+    }
+    
+    onNew(){
+        this.dom.style.width = this.dom.style.height = "100px";
+    }
+    
+    restoreSave(){
+        var props = ["flex-direction", "justify-content", "align-items", "flex-wrap", "align-content"];
+        for(var k of props){
+            this.dom.style[k] = this.saveData[k];
+        }
+    }
+    
+    createPropertiesView(win){
+        var self = this;
+        var props = ["flex-direction", "justify-content", "align-items", "flex-wrap", "align-content"];
+        function cb(k, v){
+            self.dom.style[k] = v;
+            self.saveData[k] = v;
+        }
+        for(var prop of props){
+            win.addField(prop, "text", this.dom.style[prop], cb);
+        }
+    }
+    
+    restoreSaveFromParent(self){
+        var props = ["flex", "align-self"];
+        for(var k of props){
+            self.dom.style[k] = self.saveData[k];
+        }
+    }
+    
+    getPropertiesFromParent(win, self){
+        var props = ["flex", "align-self"];
+        function cb(k, v){
+            self.dom.style[k] = v;
+            self.saveData[k] = v;
+        }
+        for(var prop of props){
+            win.addField(prop, "text", self.dom.style[prop], cb);
+        }
+    }
+}
+
+SmartDashboard.registerWidget(FlexContainer, "container");

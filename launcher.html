@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>SmartDashboard.js</title>
+    <style>
+        body, html, progress {
+            width: 100%;
+            text-align: center;
+            padding: 0;
+            margin: 0;
+        }
+        
+        h1 {
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body class="main">
+    <h1>SmartDashboard.js</h1>
+    <script>
+        const fs = require('fs');
+        const gui = require("nw.gui");
+        
+        var frame = true;
+        
+        var data = {
+            sdver: gui.App.manifest.version,
+            widgets: [],
+            options: {}
+        };
+        
+        try {
+            var dataStr = fs.readFileSync("save.json");
+            data = JSON.parse(dataStr);
+            if(data.options.dsMode){
+                frame = false;
+            }
+        } catch (e) {
+            console.log(e);
+        }
+        
+        if(typeof data.options.useDsModeSwitch == "undefined"){
+            data.options.useDsModeSwitch = true;
+        }
+        
+        global.data = data;
+        
+        if(gui.App.argv.indexOf("--ds-mode") > -1 && data.options.useDsModeSwitch){
+            frame = false;
+            data.options.dsMode = true;
+        }
+        
+        global.initCallback = function(){
+            gui.Window.get().close();
+        };
+        
+        console.info("Launching");
+        setTimeout(function(){
+            gui.Window.open("index.html", {
+                "title": "SmartDashboard",
+                "icon": "assets/favicon.png",
+                "frame": frame,
+                "transparent": false,
+                "show": false,
+                "id": "SmartDashboard_main"
+            });
+        }, 500); // give some time for splash to show up before the thread freezes
+    </script>
+</body>
+</html>
