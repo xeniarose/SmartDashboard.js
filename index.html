@@ -28,6 +28,14 @@
     <div id="place-screen">
         <h1>Click anywhere to place</h1>
     </div>
+    <script>
+        const gui = require('nw.gui');
+        const ntcore = require("./ntcore_node");
+        const fs = require('fs');
+        const child_process = require('child_process');
+        gui.Screen.Init();
+    </script>
+    <script src="ContextMenu.js"></script>
     <script src="index.js"></script>
     <script src="default-widgets.js"></script>
     <script>

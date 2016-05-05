@@ -1,9 +1,3 @@
-const gui = require('nw.gui');
-const ntcore = require('./ntcore_node');
-const fs = require('fs');
-const child_process = require("child_process");
-gui.Screen.Init();
-
 var SmartDashboard = {
     version: gui.App.manifest.version,
     widgets: [],
@@ -178,60 +172,10 @@ function createSdMenu() {
         })(widgetType);
     }
 
-    var sdMenu = new gui.Menu();
-    sdMenu.append(new gui.MenuItem({
-        label: "SmartDashboard.js " + SmartDashboard.version,
-        enabled: false
-    }));
-    sdMenu.append(new gui.MenuItem({
-        label: "About",
-        click: function(){
-            gui.Window.open('about.html', {
-                position: 'center'
-            });
-        }
-    }));
-    sdMenu.append(new gui.MenuItem({
-        label: "Restart",
-        click: function(){
-            SmartDashboard.saveData();
-            SmartDashboard.restart();
-        }
-    }));
-    sdMenu.append(new gui.MenuItem({
-        label: "Exit",
-        click: function(){
-            SmartDashboard.saveData();
-            window.close();
-        }
-    }));
-    sdMenu.append(new gui.MenuItem({
-        label: "DevTools",
-        click: function(){
-            gui.Window.get().showDevTools();
-        }
-    }));
-    sdMenu.append(new gui.MenuItem({
-        label: "Options",
-        click: function () {
-            SmartDashboard.showOptions();
-        }
-    }));
-    sdMenu.append(new gui.MenuItem({
-        type: "separator"
-    }));
-    sdMenu.append(new gui.MenuItem({
-        label: "New",
-        submenu: newMenu
-    }));
-    sdMenu.append(new gui.MenuItem({
-        label: "Editable",
-        type: "checkbox",
-        checked: SmartDashboard.editable,
-        click: function () {
-            SmartDashboard.setEditable(this.checked);
-        }
-    }));
+    var sdMenu = ContextMenu.create("main", [
+        {item: 7, name: "submenu", value: newMenu},
+        {item: 8, name: "checked", value: SmartDashboard.editable}
+    ]);
     return sdMenu;
 }
 
@@ -463,40 +407,18 @@ SmartDashboard.init = function () {
             SmartDashboard.handleError(e);
         }
         
-        for(var recent of profiles){
-            menu.append(new gui.MenuItem({
-                label: recent,
-                click: (function(recent){
+        var menuSpec = profiles.map(function(item){
+            return {
+                label: item,
+                click: (function(item){
                     return function(){
-                        SmartDashboard.switchProfile(recent);
+                        SmartDashboard.switchProfile(item);
                     };
-                })(recent)
-            }));
-        }
+                })(item)
+            };
+        }).concat(ContextMenu.defs.profiles);
         
-        menu.append(new gui.MenuItem({
-            type: "separator"
-        }));
-        
-        menu.append(new gui.MenuItem({
-            label: "New Layout",
-            click: function(){
-                var name = prompt("Layout name:");
-                if(name == null) return;
-                name = name.replace(/[<>:"\/\\\|\?\*]/g, "").trim();
-                if(name == "") return;
-                SmartDashboard.switchProfile(name);
-            }
-        }));
-        
-        menu.append(new gui.MenuItem({
-            label: "Open Layouts Folder",
-            click: function(){
-                gui.Shell.openItem(process.cwd() + "/layouts");
-            }
-        }));
-        
-        menu.popup(e.target.offsetLeft, e.target.offsetTop + e.target.offsetHeight);
+        ContextMenu.create(menuSpec).popup(e.target.offsetLeft, e.target.offsetTop + e.target.offsetHeight);
     };
     document.querySelector(".current-profile").textContent = SmartDashboard.options.profile;
     
@@ -665,8 +587,8 @@ SmartDashboard.switchProfile = function(newProfile){
     SmartDashboard.saveData();
     SmartDashboard.options.profile = newProfile;
     
-    for(var widget of SmartDashboard.widgets){
-        SmartDashboard.removeWidget(widget);
+    while(SmartDashboard.widgets.length > 0){
+        SmartDashboard.removeWidget(SmartDashboard.widgets[0]);
     }
     
     SmartDashboard.loadWidgets();
