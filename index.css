@@ -361,3 +361,7 @@ input[type=checkbox].redgreen:checked {
     height: 100% !important;*/
     margin: 0;
 }
+
+.profile-container {
+    margin-top: 5px;
+}

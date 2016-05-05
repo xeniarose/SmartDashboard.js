@@ -391,6 +391,10 @@ SmartDashboard.init = function () {
         data.options.theme = "__default__";
     }
     
+    if(!data.options.profile){
+        data.options.profile = "default";
+    }
+    
     SmartDashboard.setTheme(SmartDashboard.options.theme);
 
     try {
@@ -445,6 +449,57 @@ SmartDashboard.init = function () {
         return false;
     }
     
+    document.querySelector("#open-profile").onclick = function(e){
+        var menu = new gui.Menu();
+        
+        var profiles = [];
+        
+        try {
+            var normalizedPath = require("path").join(process.cwd(), "layouts");
+            fs.readdirSync(normalizedPath).forEach(function (file) {
+                profiles.push(file.substring(0, file.length - ".json".length));
+            });
+        } catch (e) {
+            SmartDashboard.handleError(e);
+        }
+        
+        for(var recent of profiles){
+            menu.append(new gui.MenuItem({
+                label: recent,
+                click: (function(recent){
+                    return function(){
+                        SmartDashboard.switchProfile(recent);
+                    };
+                })(recent)
+            }));
+        }
+        
+        menu.append(new gui.MenuItem({
+            type: "separator"
+        }));
+        
+        menu.append(new gui.MenuItem({
+            label: "New Layout",
+            click: function(){
+                var name = prompt("Layout name:");
+                if(name == null) return;
+                name = name.replace(/[<>:"\/\\\|\?\*]/g, "").trim();
+                if(name == "") return;
+                SmartDashboard.switchProfile(name);
+            }
+        }));
+        
+        menu.append(new gui.MenuItem({
+            label: "Open Layouts Folder",
+            click: function(){
+                gui.Shell.openItem(process.cwd() + "/layouts");
+            }
+        }));
+        
+        menu.popup(e.target.offsetLeft, e.target.offsetTop + e.target.offsetHeight);
+    };
+    document.querySelector(".current-profile").textContent = SmartDashboard.options.profile;
+    
     document.querySelector("#dashboard").ondblclick = function(e){
         if(e.target != this) return;
         for(var item of SmartDashboard.widgets){
@@ -487,27 +542,7 @@ SmartDashboard.init = function () {
         console.warn("Save version doesn't match SmartDashboard version");
     }
     
-    function loadWidget(wData){
-        var widget = new SmartDashboard.widgetTypes[wData.type].widget(wData.table, wData.key, wData.data);
-        widget.setPosition(wData.x, wData.y, wData.w, wData.h);
-        SmartDashboard.addWidget(widget);
-        
-        if(wData.children){
-            for (var childData of wData.children){
-                var childWidget = loadWidget(childData);
-                widget.addChild(childWidget, true);
-            }
-        }
-        return widget;
-    };
-
-    for (var wData of data.widgets) {
-        if (!SmartDashboard.widgetTypes.hasOwnProperty(wData.type)) {
-            console.warn("No widget for:", wData.type);
-            continue;
-        }
-        loadWidget(wData);
-    }
+    SmartDashboard.loadWidgets();
     
     if(SmartDashboard.options.dsMode){
         var screen = gui.Screen.screens[0]; // DriverStation docks to primary screen only
@@ -552,11 +587,43 @@ SmartDashboard.init = function () {
     }, 500); // wait for things to load a bit
 }
 
+SmartDashboard.loadWidgets = function(){
+    var widgets = [];
+    try {
+        widgets = JSON.parse(fs.readFileSync("layouts/" + SmartDashboard.options.profile + ".json").toString());
+    } catch (e) {
+        SmartDashboard.handleError(e);
+    }
+    
+    function loadWidget(wData){
+        var widget = new SmartDashboard.widgetTypes[wData.type].widget(wData.table, wData.key, wData.data);
+        widget.setPosition(wData.x, wData.y, wData.w, wData.h);
+        SmartDashboard.addWidget(widget);
+        
+        if(wData.children){
+            for (var childData of wData.children){
+                var childWidget = loadWidget(childData);
+                widget.addChild(childWidget, true);
+            }
+        }
+        return widget;
+    };
+
+    for (var wData of widgets) {
+        if (!SmartDashboard.widgetTypes.hasOwnProperty(wData.type)) {
+            console.warn("No widget for:", wData.type);
+            continue;
+        }
+        loadWidget(wData);
+    }
+}
+
 SmartDashboard.saveData = function () {
     var data = {
-        sdver: SmartDashboard.version,
-        widgets: []
+        sdver: SmartDashboard.version
     }
+    
+    var widgets = [];
     
     var topLevelWidgets = Array.prototype.map.call(document.querySelector("#dashboard").children, function(el){
         return el.parentWidget;
@@ -584,12 +651,26 @@ SmartDashboard.saveData = function () {
     };
     
     for(var widget of topLevelWidgets){
-        saveWidget(widget, data.widgets);
+        saveWidget(widget, widgets);
     }
     
     data.options = SmartDashboard.options;
     data = JSON.stringify(data);
     fs.writeFileSync("save.json", data);
+    
+    fs.writeFileSync("layouts/" + SmartDashboard.options.profile + ".json", JSON.stringify(widgets));
+}
+
+SmartDashboard.switchProfile = function(newProfile){
+    SmartDashboard.saveData();
+    SmartDashboard.options.profile = newProfile;
+    
+    for(var widget of SmartDashboard.widgets){
+        SmartDashboard.removeWidget(widget);
+    }
+    
+    SmartDashboard.loadWidgets();
+    document.querySelector(".current-profile").textContent = newProfile;
 }
 
 SmartDashboard.setEditable = function (flag) {

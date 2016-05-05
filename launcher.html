@@ -42,6 +42,10 @@
             console.log(e);
         }
         
+        if(data.options.theme){
+            document.write('<link rel="stylesheet" id="theme-css" href="themes/' + data.options.theme + '.css"/>');
+        }
+        
         if(typeof data.options.useDsModeSwitch == "undefined"){
             data.options.useDsModeSwitch = true;
         }
@@ -66,6 +70,11 @@
                 "transparent": false,
                 "show": false,
                 "id": "SmartDashboard_main"
+            }, function(win){
+                setTimeout(function(){
+                    win.show();
+                    gui.Window.get().close();
+                }, 5000);
             });
         }, 500); // give some time for splash to show up before the thread freezes
     </script>
