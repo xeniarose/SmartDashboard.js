@@ -1,8 +1,6 @@
 nwjs-sdk-v0.14.1-win-x64/
-plugins/
-themes/
 *.bat
 save.json
-layouts/
+layouts/*.json
 build/
 cache/

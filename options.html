@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="index.css" />
     <script>
         // major hacks to disable the animation
-        document.write('<link rel="stylesheet" id="theme-css" href="' + global.SmartDashboard.getThemeLocation() + '"/>');
+        document.write('<link rel="stylesheet" id="theme-css" href="' + global.FileUtils.getThemeLocation() + '"/>');
     </script>
     <style>
         .caption {
@@ -83,7 +83,7 @@
                 <label><input type="radio" name="ds-toggle" class="ds-default-toggle toggle-off" /> LabVIEW Dashboard</label><br/>
                 <p class="caption">The default dashboard is what DriverStation launches when you choose "Default" in the dashboard selector. Close DriverStation before changing.</p>
                 <script>
-                    if(global.SmartDashboard.isDefaultDashboard()){
+                    if(global.FileUtils.isDefaultDashboard()){
                         document.querySelector(".ds-default-toggle.toggle-on").checked = true;
                     } else {
                         document.querySelector(".ds-default-toggle.toggle-off").checked = true;
@@ -126,11 +126,11 @@
     <script>
         var restartRequired = false;
         [].forEach.call(document.querySelectorAll(".widget-select"), function(el){
-            global.SmartDashboard.populateWidgetSelect(el);
+            global.DomUtils.renderWidgetSelect(el);
         });
         
-        global.SmartDashboard.populatePluginList(document.querySelector(".plugins-view"));
-        global.SmartDashboard.populateThemeSelect(document.querySelector("#theme"));
+        global.DomUtils.renderPluginList(document.querySelector(".plugins-view"));
+        global.DomUtils.renderThemeSelect(document.querySelector("#theme"));
         document.querySelector("#theme").onchange = function(e){
             global.SmartDashboard.setTheme(e.target.value);
             global.SmartDashboard.setTheme(e.target.value, document.querySelector("#theme-css"));
@@ -162,7 +162,7 @@
                 }
             });
             
-            global.SmartDashboard.setDefaultDashboard(document.querySelector(".ds-default-toggle.toggle-on").checked);
+            global.FileUtils.setDefaultDashboard(document.querySelector(".ds-default-toggle.toggle-on").checked);
             
             global.SmartDashboard.setTheme(global.SmartDashboard.options.theme);
             global.SmartDashboard.setTheme(global.SmartDashboard.options.theme, document.querySelector("#theme-css"));

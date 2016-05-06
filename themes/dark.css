@@ -1,0 +1,35 @@
+body, .widget, .button-pane, #entries, textarea {
+    background: black;
+    color: white;
+}
+
+::-webkit-scrollbar-corner {
+    background: black;
+}
+
+label {
+    color: white;
+}
+
+input[type=text], input[type=number], select, button {
+    color: white;
+    border: 1px solid gray;
+    background: black;
+}
+
+.button-pane {
+    border-top: 1px solid darkgray;
+    background: black;
+}
+
+.widget-array-container {
+    border: 1px solid gray;
+}
+
+.widget-array-container ul li {
+    border-bottom: 1px solid gray;
+}
+
+.widget-array-container ul li:nth-child(1) {
+    border-top: 1px solid gray;
+}

@@ -1,0 +1,10 @@
+DS colors
+dark bg: #2A2A2A
+light bg: #464646
+selector: #4B4B4B
+textbox: #D4D4D4
+icon: #969696 (dark) #F3F3F3 (light)
+selected: #01D3FF
+pressed: #2D2D2D
+text: white / black
+border: #010101, #282828

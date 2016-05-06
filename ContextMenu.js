@@ -1,7 +1,6 @@
 var ContextMenu = {};
 
-ContextMenu.create = function(spec, params){
-    var menu = new gui.Menu();
+ContextMenu.append = function(menu, spec, params){
     if(typeof spec == "string"){
         spec = ContextMenu.defs[spec];
         params = params || [];
@@ -19,6 +18,10 @@ ContextMenu.create = function(spec, params){
         menu.append(new gui.MenuItem(props));
     }
     return menu;
+}
+
+ContextMenu.create = function(spec, params){
+    return ContextMenu.append(new gui.Menu(), spec, params);
 }
 
 ContextMenu.defs = {

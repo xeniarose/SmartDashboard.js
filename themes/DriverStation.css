@@ -1,0 +1,98 @@
+body, .container {
+    background: #2A2A2A;
+    color: white;
+}
+
+.not-editing {
+    background: #1A1A1A;
+}
+
+.widget, .button-pane, #entries {
+    background: #464646;
+}
+
+.container.drop-target {
+    background: #2A2F2A;
+}
+
+.container[data-editing=true]:not(.not-editing) {
+    background: #2A2A2F;
+}
+
+.container[data-editing=true]:not(.remove-target) {
+    border: 1px solid #01D3FF;
+}
+
+.container.remove-target, .container.remove-target[data-editing=true]:not(.not-editing), .container.remove-target[data-editing=true] {
+    background: #2F2A2A;
+}
+
+.widget {
+    box-shadow: 0px 0px 2px #1D1D1D;
+    border-radius: 2px;
+}
+
+.widget.drag {
+    box-shadow: 2px 2px 2px #1D1D1D;
+}
+
+::-webkit-scrollbar-corner {
+    background: #2A2A2A;
+}
+
+label {
+    color: white;
+}
+
+input[type=text], input[type=number], textarea {
+    color: black;
+    border: 1px solid #282828;
+    background: #D4D4D4;
+}
+
+.connection-status {
+    background: #4B4B4B;
+    border: 1px solid #282828;
+}
+
+select, button {
+    background: #4B4B4B;
+    border: 1px solid #282828;
+    color: white;
+    transition: background 0.2s, color 0.2s;
+}
+
+select:active, button:active {
+    color: #01D3FF;
+    background: #2D2D2D;
+}
+
+a {
+    color: #01D3FF;
+}
+
+#entries {
+    border-bottom-right-radius: 10px;
+    border-top-right-radius: 10px;
+    border: 1px solid #010101;
+}
+
+.button-pane {
+    border-top: 1px solid darkgray;
+}
+
+.widget-array-container {
+    border: none;
+}
+
+.widget-array-container ul li {
+    border-bottom: 1px solid #282828;
+}
+
+.widget-array-container ul li:nth-child(1) {
+    border-top: 1px solid #282828;
+}
+
+.vis-panel div {
+    color: white !important;
+}
