@@ -93,17 +93,9 @@ class DomUtils {
                 a.onclick = function(){
                     var nameRaw = this.dataset.path;
                     
-                    var val = ntcore.getTable("").get(nameRaw);
-                    var widgetType = typeof val;
-                    if(widgetType == "undefined") widgetType = "object";
-                    if(Array.isArray(val)) widgetType = "array";
+                    var widgetType = WidgetUtils.getTypeForEntry(nameRaw);
                     
-                    SmartDashboard.setEditable(true);
-                    
-                    var widget = new (SmartDashboard.getDefaultWidget(widgetType)).widget(
-                        nameRaw.substring(0, nameRaw.lastIndexOf("/")),
-                        nameRaw.substring(nameRaw.lastIndexOf("/") + 1));
-                    SmartDashboard.positionWidget(widget);
+                    WidgetUtils.defaultNewWidget(widgetType, nameRaw);
                 };
                 el.appendChild(btn);
                 el.appendChild(a);
@@ -128,6 +120,83 @@ class DomUtils {
                 items.push(key);
         items.sort();
         render(root, entries, items, "");
+    }
+    
+    static registerDocumentEventHandlers(){
+        document.querySelector("#entries").onmouseover = DomUtils.renderVariableEntries;
+        var dashboard = document.querySelector("#dashboard");
+       
+        dashboard.onmousemove = WidgetUtils.forwardEvent.bind(WidgetUtils, "onmousemove");
+        dashboard.onmouseup = WidgetUtils.forwardEvent.bind(WidgetUtils, "onmouseup");
+        
+        dashboard.ondblclick = function(e){
+            if(e.target != this) return;
+            for(var item of SmartDashboard.widgets){
+                if(item != this && item.editing)
+                    item.setEditing(false);
+            }
+            DomUtils.resetClass("not-editing");
+        };
+
+        dashboard.oncontextmenu = function (ev) {
+            if ((ev.target.tagName.toLowerCase() == "input" || ev.target.tagName.toLowerCase() == "textarea")
+                    && !SmartDashboard.editable) {
+                return true;
+            }
+            ev.preventDefault();
+            var menu;
+            var widget = null;
+            var el = ev.target;
+            do {
+            if (el.parentWidget) {
+                widget = el.parentWidget;
+                break;
+            }
+            el = el.parentElement;
+            } while (el != null);
+            if (widget != null && widget.editable) {
+                menu = widget._createContextMenu();
+            } else {
+                menu = createSdMenu();
+            }
+            menu.popup(ev.x, ev.y);
+            return false;
+        }
+        
+        document.querySelector("#open-profile").onclick = function(e){
+            var menu = new gui.Menu();
+            
+            var profiles = [];
+            
+            try {
+                FileUtils.forAllFilesInDirectory(FileUtils.getDataLocations().layouts, function (file) {
+                    if(!file.endsWith(".json"))
+                        return;
+                    profiles.push(file.substring(0, file.length - ".json".length));
+                });
+            } catch (e) {
+                SmartDashboard.handleError(e);
+            }
+            
+            var menuSpec = profiles.map(function(item){
+                return {
+                    label: item,
+                    click: (function(item){
+                        SmartDashboard.switchProfile(item);
+                    }).bind(DomUtils, item)
+                };
+            }).concat(ContextMenu.defs.profiles);
+            
+            ContextMenu.create(menuSpec).popup(e.target.offsetLeft, e.target.offsetTop + e.target.offsetHeight);
+        };
+        
+        document.querySelector("#error-screen button.restart").onclick = function(){
+            SmartDashboard.restart();
+        };
+        
+        document.querySelector("#error-screen button.close").onclick = function(){
+            document.querySelector("#error-screen").classList.remove("active");
+        };
     }
 }
 

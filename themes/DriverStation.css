@@ -51,7 +51,6 @@ input[type=text], input[type=number], textarea {
 }
 
 .connection-status {
-    background: #4B4B4B;
     border: 1px solid #282828;
 }
 

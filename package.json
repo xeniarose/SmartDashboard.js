@@ -11,7 +11,8 @@
     "width": 300,
     "height": 20,
     "position": "center",
-    "transparent": false
+    "transparent": false,
+    "show": false
   },
   "js-flags": "--expose-gc",
   "single-instance": false

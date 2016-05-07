@@ -6,11 +6,20 @@ var SmartDashboard = {
     options: {},
     plugins: []
 };
-SmartDashboard.handleError = function (e) {
+
+SmartDashboard.handleError = function(e, notSerious) {
+    var msg;
     if (e.stack) {
         console.error(e.stack);
+        msg = e.stack;
     } else {
         console.error(e);
+        msg = e + "";
+    }
+    
+    if(!notSerious){
+        document.querySelector("#error-screen .error-details").textContent = msg;
+        document.querySelector("#error-screen").classList.add("active");
     }
 }
 
@@ -24,28 +33,14 @@ SmartDashboard.registerWidget = function (widget, dataType) {
 SmartDashboard.setTheme = function(theme, link){
     if(typeof link == "undefined"){
         link = document.getElementById("theme-css");
+        link.onerror = function(e){
+            SmartDashboard.handleError("Failed to load theme: " + theme);
+        };
     }
     if(theme == "__default__" || typeof theme == "undefined"){
         link.href = "";
     } else {
         link.href = FileUtils.getDataLocations().themes + theme + ".css";
-    }
-}
-
-SmartDashboard.getDefaultWidget = function(type){
-    var entry = SmartDashboard.options["default-" + type];
-    if(typeof entry == "undefined"){
-        var first = null;
-        for(var widgetType in SmartDashboard.widgetTypes){
-            if(first == null) first = widgetType;
-            if (!SmartDashboard.widgetTypes.hasOwnProperty(widgetType)) continue;
-            if(SmartDashboard.widgetTypes[widgetType].dataType == type){
-                return SmartDashboard.widgetTypes[widgetType];
-            }
-        }
-        return SmartDashboard.widgetTypes[first];
-    } else {
-        return SmartDashboard.widgetTypes[entry];
     }
 }
 
@@ -59,27 +54,10 @@ function createSdMenu() {
     typesList.sort();
     
     for(var widgetType of typesList){
-        (function (widgetType) {
-            newMenu.append(new gui.MenuItem({
-                label: widgetType,
-                click: function () {
-                    setTimeout(function () {
-                        var isContainer = SmartDashboard.widgetTypes[widgetType].dataType == "container";
-                        var nameRaw = "";
-                        if(!isContainer){
-                            nameRaw = prompt("SmartDashboard variable:");
-                            if (nameRaw == null || nameRaw == "")
-                                return;
-                        }
-                        var widget = new SmartDashboard.widgetTypes[widgetType].widget(nameRaw.substring(0, nameRaw.lastIndexOf("/")),
-                            nameRaw.substring(nameRaw.lastIndexOf("/") + 1));
-                        if(widget.onNew) widget.onNew();
-                        SmartDashboard.setEditable(true);
-                        SmartDashboard.positionWidget(widget);
-                    }, 1);
-                }
-            }));
-        })(widgetType);
+        newMenu.append(new gui.MenuItem({
+            label: widgetType,
+            click: WidgetUtils.promptNewWidget.bind(WidgetUtils, widgetType)
+        }));
     }
 
     var sdMenu = ContextMenu.create("main", [
@@ -89,9 +67,48 @@ function createSdMenu() {
     return sdMenu;
 }
 
+SmartDashboard.createWindowCoordinates = function(width, height){
+    var win = gui.Window.get();
+    var screen = gui.Screen.screens[0];
+    var area = screen.work_area;
+    var coords = {
+        x: Math.round(win.x + win.width / 2 - width / 2),
+        y: Math.round(win.y + win.height / 2 - height / 2)
+    };
+    
+    if(coords.x < 1) {
+        coords.x = 1;
+    }
+    if(coords.x + width > area.x + area.width - 1){
+        coords.x = area.x + area.width- 1 - width;
+    }
+    if(coords.y < 1) {
+        coords.y = 1;
+    }
+    if(coords.y + height > area.y + area.height - 1){
+        coords.y = area.y + area.height - 1 - height;
+    }
+    return coords;
+}
+
 SmartDashboard.showOptions = function () {
+    var c = SmartDashboard.createWindowCoordinates(500, 500);
     gui.Window.open('options.html', {
-        position: 'center'
+        width: 500,
+        height: 500,
+        x: c.x,
+        y: c.y
+    });
+}
+
+SmartDashboard.showAbout = function(){
+    var c = SmartDashboard.createWindowCoordinates(800, 600);
+    gui.Window.open('about.html', {
+        frame: false,
+        width: 800,
+        height: 600,
+        x: c.x,
+        y: c.y
     });
 }
 
@@ -125,17 +142,10 @@ SmartDashboard.entriesTree = function(){
     return root;
 }
 
-SmartDashboard.positionWidget = function(widget){
-    var screen = document.querySelector("#place-screen");
-    screen.onclick = function(e){
-        widget.setPosition(e.clientX + document.body.scrollLeft, e.clientY + document.body.scrollTop);
-        SmartDashboard.addWidget(widget);
-        screen.classList.remove("active");
-    };
-    screen.classList.add("active");
-}
-
 SmartDashboard.init = function () {
+    window.onerror = function(message, source, lineno, colno, error){
+        SmartDashboard.handleError(error);
+    }
     global.SmartDashboard = SmartDashboard;
     var data = global.data;
 
@@ -168,106 +178,29 @@ SmartDashboard.init = function () {
         SmartDashboard.handleError(e);
     }
     
-    document.querySelector("#entries").onmouseover = DomUtils.renderVariableEntries;
-
-    document.querySelector("#dashboard").onmousemove = function (e) {
-        for (var widget of SmartDashboard.widgets) {
-            if (widget._dragging && widget.dom.onmousemove) {
-                widget.dom.onmousemove(e);
-            }
-        }
-    }
-
-    document.querySelector("#dashboard").onmouseup = function (e) {
-        for (var widget of SmartDashboard.widgets) {
-            if (widget._dragging && widget.dom.onmouseup) {
-                widget.dom.onmouseup(e);
-            }
-        }
-    }
-
-    document.querySelector("#dashboard").oncontextmenu = function (ev) {
-        if ((ev.target.tagName.toLowerCase() == "input" || ev.target.tagName.toLowerCase() == "textarea") && !SmartDashboard.editable) {
-            return true;
-        }
-        ev.preventDefault();
-        var menu;
-        var widget = null;
-        var el = ev.target;
-        do {
-            if (el.parentWidget) {
-                widget = el.parentWidget;
-                break;
-            }
-            el = el.parentElement;
-        } while (el != null);
-        if (widget != null && widget.editable) {
-            menu = widget._createContextMenu();
-        } else {
-            menu = createSdMenu();
-        }
-        menu.popup(ev.x, ev.y);
-        return false;
-    }
-    
-    document.querySelector("#open-profile").onclick = function(e){
-        var menu = new gui.Menu();
-        
-        var profiles = [];
-        
-        try {
-            FileUtils.forAllFilesInDirectory(FileUtils.getDataLocations().layouts, function (file) {
-                if(!file.endsWith(".json"))
-                    return;
-                profiles.push(file.substring(0, file.length - ".json".length));
-            });
-        } catch (e) {
-            SmartDashboard.handleError(e);
-        }
-        
-        var menuSpec = profiles.map(function(item){
-            return {
-                label: item,
-                click: (function(item){
-                    return function(){
-                        SmartDashboard.switchProfile(item);
-                    };
-                })(item)
-            };
-        }).concat(ContextMenu.defs.profiles);
-        
-        ContextMenu.create(menuSpec).popup(e.target.offsetLeft, e.target.offsetTop + e.target.offsetHeight);
-    };
     document.querySelector(".current-profile").textContent = SmartDashboard.options.profile;
-    
-    document.querySelector("#dashboard").ondblclick = function(e){
-        if(e.target != this) return;
-        for(var item of SmartDashboard.widgets){
-            if(item != this && item.editing)
-                item.setEditing(false);
-        }
-        DomUtils.resetClass("not-editing");
-    };
-    
-    
+    DomUtils.registerDocumentEventHandlers();
 
     console.info("Loading plugins");
     try {
         FileUtils.forAllFilesInDirectory(FileUtils.getDataLocations().plugins, function (file) {
             console.info("Loading plugin", file);
-            var plugin;
+            var plugin = {};
             try {
                 plugin = require(FileUtils.getDataLocations().plugins + file);
             } catch(e){
                 SmartDashboard.handleError(e);
-                plugin = {
-                    info: {
-                        name: file,
-                        version: "Plugin error",
-                        description: "" + e
-                    }
+                plugin.info = {
+                    name: file,
+                    version: "Plugin error",
+                    description: "" + e
                 };
             }
+            plugin.info = plugin.info || {
+                name: file,
+                version: "Not available",
+                description: "Not available"
+            };
             plugin.info.file = file;
             SmartDashboard.plugins.push(plugin.info);
             console.log(plugin.info);
@@ -290,6 +223,8 @@ SmartDashboard.init = function () {
         gui.Window.get().resizeTo(area.width, area.height - 200);
         // DriverStation is 200px height
     } else {
+        // let webkit handle window position restore
+        // the titlebar interferes with doing it manually
         /*try {
             gui.Window.get().moveTo(SmartDashboard.options.window.x, SmartDashboard.options.window.y);
             gui.Window.get().resizeTo(SmartDashboard.options.window.width, SmartDashboard.options.window.height);
@@ -309,16 +244,20 @@ SmartDashboard.init = function () {
         gui.Window.get().on("resize", windowCallback);*/
     }
 
+    // make sure data gets saved on exit
     window.onbeforeunload = SmartDashboard.saveData;
     process.on('exit', SmartDashboard.saveData);
     
-    setInterval(function(){
+    function checkConnection(){
         if(ntcore.isConnected()){
             document.querySelector(".connection-status").classList.add("connected");
         } else {
             document.querySelector(".connection-status").classList.remove("connected");
         }
-    }, 5000);
+    }
+    
+    setInterval(checkConnection, 5000);
+    setTimeout(checkConnection, 1000);
     
     setTimeout(function(){
         if(global.initCallback) global.initCallback();
@@ -331,7 +270,7 @@ SmartDashboard.loadWidgets = function(){
     try {
         widgets = JSON.parse(fs.readFileSync(FileUtils.getDataLocations().layouts + SmartDashboard.options.profile + ".json").toString());
     } catch (e) {
-        SmartDashboard.handleError(e);
+        SmartDashboard.handleError(e, true);
     }
     
     function loadWidget(wData){
@@ -395,9 +334,13 @@ SmartDashboard.saveData = function () {
     
     data.options = SmartDashboard.options;
     data = JSON.stringify(data);
-    fs.writeFileSync("save.json", data);
-    
-    fs.writeFileSync(FileUtils.getDataLocations().layouts + SmartDashboard.options.profile + ".json", JSON.stringify(widgets));
+    try {
+        fs.writeFileSync(FileUtils.getDataLocations().save, data);
+        
+        fs.writeFileSync(FileUtils.getDataLocations().layouts + SmartDashboard.options.profile + ".json", JSON.stringify(widgets));
+    } catch(e){
+        SmartDashboard.handleError(e);
+    }
 }
 
 SmartDashboard.switchProfile = function(newProfile){
@@ -423,6 +366,7 @@ SmartDashboard.setEditable = function (flag) {
 
 SmartDashboard.addWidget = function (widget) {
     this.widgets.push(widget);
+    WidgetUtils.onWidgetInserted(widget);
     document.querySelector("#dashboard").appendChild(widget.dom);
     // cache width and height so they can be saved on close
     widget._w = widget.dom.offsetWidth;
@@ -431,7 +375,7 @@ SmartDashboard.addWidget = function (widget) {
 }
 
 SmartDashboard.removeWidget = function (widget) {
-    widget.dom.remove();
+    WidgetUtils.onWidgetRemoved(widget);
     widget.destroy();
     var index = this.widgets.indexOf(widget);
     if (index > -1) {

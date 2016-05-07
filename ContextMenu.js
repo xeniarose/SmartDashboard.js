@@ -33,9 +33,7 @@ ContextMenu.defs = {
         {
             label: "About",
             click: function(){
-                gui.Window.open('about.html', {
-                    position: 'center'
-                });
+                SmartDashboard.showAbout();
             }
         },
         {
@@ -91,8 +89,10 @@ ContextMenu.defs = {
         {
             label: "Open Layouts Folder",
             click: function(){
-                gui.Shell.openItem(process.cwd() + "/layouts");
+                gui.Shell.openExternal(FileUtils.getDataLocations().layouts);
             }
         }
     ]
 };
+
+global.ContextMenu = ContextMenu;

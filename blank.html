@@ -21,6 +21,8 @@
             overflow-y: auto;
             min-height: 0px;
             padding: 1em;
+            border-collapse: collapse;
+            border-spacing: 0;
         }
         
         .button-pane {
@@ -28,11 +30,28 @@
             width: 100%;
             text-align: right;
         }
+        
+        .form-items label {
+            display: table-row;
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+        
+        .form-items label span {
+            text-align: right;
+        }
+        
+        .form-items input, .form-items select, .form-items label span {
+            display: table-cell;
+            border-collapse: collapse;
+            border-spacing: 0;
+            padding-right: 0.2em;
+        }
     </style>
 </head>
 
-<body class="options">
-    <form action="javascript:void(0)" onsubmit="save()">
+<body class="properties">
+    <form action="javascript:void(0)">
         <div class="form-items">
             
         </div>
@@ -42,9 +61,17 @@
         </div>
     </form>
     <script>
-        window.addField = function(name, type, def, callback){
+        var gui = require("nw.gui");
+        
+        function uniqueId() {
+            return Math.floor(Math.random() * 0x10000000000000).toString(16);
+        }
+        
+        window.addField = function(name, type, def, callback, autocomplete){
             var label = document.createElement("label");
-            label.textContent = name + ": ";
+            var text = document.createElement("span");
+            text.textContent = name + ": ";
+            label.appendChild(text);
             var inp = document.createElement("input");
             inp.value = def;
             inp.onchange = (function(name, cb){
@@ -53,8 +80,20 @@
                 };
             })(name, callback);
             label.appendChild(inp);
+            
+            if(autocomplete){
+                var dl = document.createElement("datalist");
+                dl.id = uniqueId();
+                for(var item of autocomplete){
+                    var opt = document.createElement("option");
+                    opt.setAttribute("value", item);
+                    dl.appendChild(opt);
+                }
+                document.body.appendChild(dl);
+                inp.setAttribute("list", dl.id);
+            }
+            
             document.querySelector(".form-items").appendChild(label);
-            document.querySelector(".form-items").appendChild(document.createElement("br"));
         }
     </script>
 </body>

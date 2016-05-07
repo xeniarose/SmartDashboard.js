@@ -19,7 +19,7 @@
     <div id="entries">
         <div class="connection-status"> to Robot</div>
         <div class="profile-container">
-            <button class="profile-button" id="open-profile">Select</button> Layout: <span class="current-profile">default</span>
+            <button class="profile-button" id="open-profile">Select</button> Layout:&nbsp;<span class="current-profile">default</span>
         </div>
         <h3>Variables</h3>
         <ul class="list">
@@ -27,6 +27,15 @@
     </div>
     <div id="place-screen">
         <h1>Click anywhere to place</h1>
+    </div>
+    <div id="error-screen">
+        <div class="dialog">
+            <h3>SmartDashboard.js encountered an error</h3>
+            <pre class="error-details-pre"><code class="error-details"></code></pre>
+            <div class="button-pane">
+                <button class="restart" type="button">Restart</button><button class="close" type="button">Dismiss</button>
+            </div>
+        </div>
     </div>
     <script>
         const gui = require('nw.gui');
@@ -39,6 +48,7 @@
     <script src="CoordinateUtils.js"></script>
     <script src="FileUtils.js"></script>
     <script src="DomUtils.js"></script>
+    <script src="WidgetUtils.js"></script>
     <script src="index.js"></script>
     <script src="DraggableElement.js"></script>
     <script src="Widget.js"></script>

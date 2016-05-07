@@ -45,7 +45,13 @@ class DraggableElement {
     
     _propertyMenuCallback(){
         var self = this;
-        gui.Window.open("blank.html", {}, function (w) {
+        var c = SmartDashboard.createWindowCoordinates(500, 500);
+        gui.Window.open("blank.html", {
+            width: 500,
+            height: 500,
+            x: c.x,
+            y: c.y
+        }, function (w) {
             var win = w.window;
             w.on("loaded", function () {
                 var cb = function (k, v) {

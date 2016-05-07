@@ -110,7 +110,6 @@ class Graph extends Widget {
                 gui.Shell.openItem(this.value);
             } catch(e){
                 SmartDashboard.handleError(e);
-                alert(e);
             }
         }, false);
         chooser.style.display = "none";
@@ -469,6 +468,10 @@ class FlowContainer extends Container {
     getDragMode(){
         return "order";
     }
+    
+    onNew(){
+        this.dom.classList.add("drag-order");
+    }
 }
 
 SmartDashboard.registerWidget(FlowContainer, "container");
@@ -480,6 +483,7 @@ class FlexContainer extends Container {
     
     onNew(){
         this.dom.style.width = this.dom.style.height = "100px";
+        this.dom.classList.add("drag-order");
     }
     
     restoreSave(){
@@ -492,12 +496,19 @@ class FlexContainer extends Container {
     createPropertiesView(win){
         var self = this;
         var props = ["flex-direction", "justify-content", "align-items", "flex-wrap", "align-content"];
+        var helpers = {
+            "flex-direction":  ["row",        "column",   "row-reverse", "column-reverse"                          ],
+            "justify-content": ["flex-start", "flex-end", "center",      "space-between", "space-around"           ],
+            "align-items":     ["flex-start", "flex-end", "center",      "baseline",      "stretch"                ],
+            "flex-wrap":       ["nowrap",     "wrap",     "wrap-reverse"                                           ],
+            "align-content":   ["flex-start", "flex-end", "center",      "space-between", "space-around", "stretch"]
+        };
         function cb(k, v){
             self.dom.style[k] = v;
             self.saveData[k] = v;
         }
         for(var prop of props){
-            win.addField(prop, "text", this.dom.style[prop], cb);
+            win.addField(prop, "text", window.getComputedStyle(this.dom)[prop], cb, helpers[prop]);
         }
     }
     
@@ -510,12 +521,16 @@ class FlexContainer extends Container {
     
     getPropertiesFromParent(win, self){
         var props = ["flex", "align-self"];
+        var helpers = {
+            "flex": ["none"],
+            "align-self": ["auto", "flex-start", "flex-end", "center", "baseline", "stretch"]
+        };
         function cb(k, v){
             self.dom.style[k] = v;
             self.saveData[k] = v;
         }
         for(var prop of props){
-            win.addField(prop, "text", self.dom.style[prop], cb);
+            win.addField(prop, "text", window.getComputedStyle(self.dom)[prop], cb, helpers[prop]);
         }
     }
 }

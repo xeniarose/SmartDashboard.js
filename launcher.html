@@ -10,16 +10,14 @@
             text-align: center;
             padding: 0;
             margin: 0;
+            -webkit-app-region: drag;
         }
         
         h1 {
             margin: 0;
         }
     </style>
-</head>
-
-<body class="main">
-    <h1>SmartDashboard.js</h1>
+    <script src="FileUtils.js"></script>
     <script>
         const fs = require('fs');
         const gui = require("nw.gui");
@@ -33,7 +31,7 @@
         };
         
         try {
-            var dataStr = fs.readFileSync("save.json");
+            var dataStr = fs.readFileSync(FileUtils.getDataLocations().save);
             data = JSON.parse(dataStr);
             if(data.options.dsMode){
                 frame = false;
@@ -45,6 +43,13 @@
         if(data.options.theme){
             document.write('<link rel="stylesheet" id="theme-css" href="themes/' + data.options.theme + '.css"/>');
         }
+    </script>
+</head>
+
+<body class="launcher">
+    <h1>SmartDashboard.js</h1>
+    <script>
+        gui.Window.get().show();
         
         if(typeof data.options.useDsModeSwitch == "undefined"){
             data.options.useDsModeSwitch = true;

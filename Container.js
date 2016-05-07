@@ -198,7 +198,12 @@ class Container extends DraggableElement {
         }
         child.dom.remove();
         child.parent = this;
-        this.dom.appendChild(child.dom);
+        WidgetUtils.onWidgetInserted(child);
+        try {
+            this.dom.appendChild(child.dom);
+        } catch (e) {
+            SmartDashboard.handleError(e);
+        }
         child.setPosition(childPos.x, childPos.y, childPos.w, childPos.h);
     }
     

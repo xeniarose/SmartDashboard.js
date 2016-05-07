@@ -41,6 +41,11 @@
             margin-bottom: 0;
             margin-top: 0.2em;
         }
+        
+        .open-folder {
+            font-size: 12px;
+            float: right;
+        }
     </style>
 </head>
 
@@ -78,7 +83,7 @@
                         }
                     });
                 </script>
-                <h3>Default Dashboard:</h3>
+                <h3>Default Dashboard: <button type="button" class="open-folder" data-folder="frcdata">Open DS Folder</button></h3>
                 <label><input type="radio" name="ds-toggle" class="ds-default-toggle toggle-on" /> SmartDashboard.js</label><br/>
                 <label><input type="radio" name="ds-toggle" class="ds-default-toggle toggle-off" /> LabVIEW Dashboard</label><br/>
                 <p class="caption">The default dashboard is what DriverStation launches when you choose "Default" in the dashboard selector. Close DriverStation before changing.</p>
@@ -104,7 +109,7 @@
            
             <fieldset>
                 <legend>Theme</legend>
-                <p class="caption">Theme CSS files can be dropped into the <code>themes</code> folder.</p>
+                <p class="caption">Theme CSS files can be dropped into the <code>themes</code> folder. <button type="button" class="open-folder" data-folder="themes">Open Themes Folder</button></p>
                 <div class="themes-view">
                     <select id="theme" class="setting"></select>
                 </div>
@@ -112,7 +117,7 @@
          
             <fieldset>
                 <legend>Plugins</legend>
-                <p class="caption">Plugin JS files can be dropped into the <code>plugins</code> folder.</p>
+                <p class="caption">Plugin JS files can be dropped into the <code>plugins</code> folder. <button type="button" class="open-folder" data-folder="plugins">Open Plugins Folder</button></p>
                 <div class="plugins-view">
                     No plugins
                 </div>
@@ -127,6 +132,12 @@
         var restartRequired = false;
         [].forEach.call(document.querySelectorAll(".widget-select"), function(el){
             global.DomUtils.renderWidgetSelect(el);
+        });
+        
+        [].forEach.call(document.querySelectorAll(".open-folder"), function(el){
+            el.onclick = function(){
+                require("nw.gui").Shell.openExternal(global.FileUtils.getDataLocations()[this.dataset.folder]);
+            };
         });
         
         global.DomUtils.renderPluginList(document.querySelector(".plugins-view"));
