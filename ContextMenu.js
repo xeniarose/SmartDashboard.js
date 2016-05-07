@@ -37,6 +37,13 @@ ContextMenu.defs = {
             }
         },
         {
+            label: "Options",
+            click: function () {
+                SmartDashboard.showOptions();
+            }
+        },
+        "---",
+        {
             label: "Restart",
             click: function(){
                 SmartDashboard.saveData();
@@ -48,18 +55,6 @@ ContextMenu.defs = {
             click: function(){
                 SmartDashboard.saveData();
                 window.close();
-            }
-        },
-        {
-            label: "DevTools",
-            click: function(){
-                gui.Window.get().showDevTools();
-            }
-        },
-        {
-            label: "Options",
-            click: function () {
-                SmartDashboard.showOptions();
             }
         },
         "---",

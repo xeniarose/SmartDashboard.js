@@ -3,13 +3,22 @@ class FileUtils {
         return "themes/" + SmartDashboard.options.theme + ".css";
     }
     
+    static makeDataFolders(){
+        var layoutsPath = FileUtils.getDataLocations().layouts;
+        if (!require("fs").existsSync(layoutsPath)){
+            require("fs").mkdirSync(layoutsPath);
+        }
+    }
+    
     static getDataLocations(){
+        var dataPath = require("nw.gui").App.dataPath;
+        var installPath = process.cwd();
         return {
-            themes: process.cwd() + "/themes/",
-            plugins: process.cwd() + "/plugins/",
-            layouts: process.cwd() + "/layouts/",
-            save: process.cwd() + "/save.json",
-            dsScript: process.cwd() + "/ds.bat",
+            themes: installPath + "/themes/",
+            plugins: installPath + "/plugins/",
+            layouts: dataPath + "/layouts/",
+            save: dataPath + "/save.json",
+            dsScript: dataPath + "/ds.bat",
             frcdata: "C:\\Users\\Public\\Documents\\FRC"
         };
     }

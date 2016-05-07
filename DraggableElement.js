@@ -6,6 +6,23 @@ class DraggableElement {
         
     }
     
+    _registerDom(dom){
+        dom.parentWidget = this;
+        this._applyStyles(dom, this.saveData.style);
+    }
+    
+    _applyStyles(dom, styleText){
+        var rules = DomUtils.getCssRules("p{" + styleText + "}");
+        if(rules.length < 1) return;
+        var style = rules[0].style;
+        for(var key in style){
+            if(style.hasOwnProperty(key) && parseInt(key) != key
+                    && ["top", "left", "width", "height"].indexOf(key) < 0){
+                this.dom.style[key] = style[key];
+            }
+        }
+    }
+    
     _createContextMenu(){
         
     }
@@ -19,7 +36,9 @@ class DraggableElement {
     }
     
     remove() {
-        
+        if(this._propsWindow){
+            this._propsWindow.close();
+        }
     }
     
     changeOrder(which){
@@ -45,14 +64,18 @@ class DraggableElement {
     
     _propertyMenuCallback(){
         var self = this;
-        var c = SmartDashboard.createWindowCoordinates(500, 500);
+        if(this._propsWindow){
+            this._propsWindow.close();
+        }
+        var c = SmartDashboard.createWindowCoordinates(350, 400);
         gui.Window.open("blank.html", {
-            width: 500,
-            height: 500,
+            width: 350,
+            height: 400,
             x: c.x,
             y: c.y
         }, function (w) {
             var win = w.window;
+            self._propsWindow = win;
             w.on("loaded", function () {
                 var cb = function (k, v) {
                     var pos = self.getPosition();
@@ -66,6 +89,10 @@ class DraggableElement {
                 win.addField("y", "number", pos.y, cb);
                 win.addField("w", "number", pos.w, cb);
                 win.addField("h", "number", pos.h, cb);
+                win.addField("style", "textarea", self.saveData.style || "", function(k, v){
+                    self.saveData.style = v;
+                    self._applyStyles(self.dom, v);
+                });
                 if(self.parent) self.parent.getPropertiesFromParent(win, self);
                 
                 self.createPropertiesView(win);

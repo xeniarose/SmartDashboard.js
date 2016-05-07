@@ -17,6 +17,9 @@
         h1 {
             -webkit-app-region: drag;
             padding-left: 1em;
+            -webkit-user-select: none;
+            margin: 0;
+            line-height: 3em;
         }
         
         .about-contents {
@@ -31,10 +34,37 @@
             width: 100%;
             text-align: right;
             -webkit-app-region: drag;
+            -webkit-user-select: none;
         }
         
         .button-pane button {
             -webkit-app-region: no-drag;
+        }
+        
+        .versions {
+            border-top: 1px solid black;
+            border-bottom: 1px solid black;
+            width: 100%;
+            display: table;
+        }
+        
+        .versions .name, .versions .version {
+            display: table-cell;
+            width: 50%;
+        }
+        
+        .versions .name {
+            padding-right: 0.5em;
+            text-align: right;
+        }
+        
+        .versions .version {
+            text-align: left;
+        }
+        
+        .versions .row {
+            display: table-row;
+            width: 100%;
         }
     </style>
     
@@ -46,9 +76,27 @@
 
 <body class="about">
     <div class="about-main">
-        <h1>SmartDashboard.js <span class="version"></span></h1>
+        <h1>SmartDashboard.js</h1>
         <div class="about-contents">
-            
+            <p>
+                SmartDashboard.js is an unofficial node.js-based dashboard for FRC. It is distributed under the MIT License.<br/><br/>
+                Copyright &copy; 2016 Erik Uhlmann
+            </p>
+            <div class="versions">
+                <div class="row">
+                    <span class="name">SmartDashboard.js</span>
+                    <span class="version sd-version"></span>
+                </div>
+                <div class="row">
+                    <span class="name">nw.js</span>
+                    <span class="version nw-version"></span>
+                </div>
+                <div class="row">
+                    <span class="name">node.js</span>
+                    <span class="version node-version"></span>
+                </div>
+            </div>
+            <br/><br/>
             <h3>Third Party Licenses</h3>
             <b>nw.js</b> <a href="https://github.com/nwjs/nw.js" target="_external">https://github.com/nwjs/nw.js</a>
             <pre><code>
@@ -74,6 +122,35 @@ H THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             </code></pre>
             <b>Chromium</b><br/>
             <a id="chromium-credits" href="javascript:void(0)">Credits page</a><br/><br/>
+            
+            <b>NetworkTables</b> <a href="https://usfirst.collab.net/sf/sfmain/do/viewProject/projects.networktables" target="_external">https://usfirst.collab.net/sf/sfmain/do/viewProject/projects.networktables</a>
+            <pre><code>
+* Copyright (c) 2009-2016 FIRST
+* All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification, are permitted provided that the following conditions are met:
+*     * Redistributions of source code must retain the above copyright
+*       notice, this list of conditions and the following disclaimer.
+*     * Redistributions in binary form must reproduce the above copyright
+*       notice, this list of conditions and the following disclaimer in the
+*       documentation and/or other materials provided with the distribution.
+*     * Neither the name of the FIRST nor the
+*       names of its contributors may be used to endorse or promote products
+*       derived from this software without specific prior written permission.
+*
+* THIS SOFTWARE IS PROVIDED BY FIRST AND CONTRIBUTORS``AS IS'' AND ANY
+* EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+* WARRANTIES OF MERCHANTABILITY NONINFRINGEMENT AND FITNESS FOR A PARTICULAR 
+* PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL FIRST OR CONTRIBUTORS BE LIABLE FOR 
+* ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+* (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+* LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+* ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+* (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+* SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+            </code></pre>
+            
             <b>vis.js</b> <a href="https://github.com/almende/vis" target="_external">https://github.com/almende/vis</a>
             <pre><code>
 The MIT License (MIT)
@@ -122,7 +199,9 @@ limitations under the License.
     </div>
     
     <script>
-        document.querySelector(".version").textContent = global.SmartDashboard.version;
+        document.querySelector(".sd-version").textContent = global.SmartDashboard.version;
+        document.querySelector(".nw-version").textContent = process.versions['node-webkit'];
+        document.querySelector(".node-version").textContent = process.versions['node'];
         
         function reassignTarget(a){
             a.onclick = function(e){

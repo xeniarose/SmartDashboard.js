@@ -1,11 +1,11 @@
 {
   "main": "launcher.html",
-  "name": "SmartDashboard",
+  "name": "SmartDashboard.js",
   "description": "Unofficial FRC SmartDashboard in nw.js",
   "version": "0.1.1",
   "keywords": ["frc", "smartdashboard"],
   "window": {
-    "title": "SmartDashboard",
+    "title": "SmartDashboard.js",
     "icon": "assets/favicon.png",
     "frame": false,
     "width": 300,

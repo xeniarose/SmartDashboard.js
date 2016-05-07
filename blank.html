@@ -39,13 +39,20 @@
         
         .form-items label span {
             text-align: right;
+            vertical-align: top;
         }
         
-        .form-items input, .form-items select, .form-items label span {
+        .form-items input, .form-items select, .form-items label span, .form-items textarea {
             display: table-cell;
             border-collapse: collapse;
             border-spacing: 0;
             padding-right: 0.2em;
+        }
+        
+        textarea {
+            box-sizing: border-box;
+            width: 100%;
+            resize: vertical;
         }
     </style>
 </head>
@@ -73,6 +80,9 @@
             text.textContent = name + ": ";
             label.appendChild(text);
             var inp = document.createElement("input");
+            if(type == "textarea"){
+                inp = document.createElement("textarea");
+            }
             inp.value = def;
             inp.onchange = (function(name, cb){
                 return function(e){

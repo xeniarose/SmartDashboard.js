@@ -4,7 +4,6 @@ class Container extends DraggableElement {
         this.dom = document.createElement("div");
         this.dom.classList.add("container");
         this.dom.classList.add("container-" + this.constructor.name);
-        this.dom.parentWidget = this;
         this.editable = false;
         this.saveData = saveData || {};
         this.editing = false;
@@ -19,6 +18,7 @@ class Container extends DraggableElement {
         };
         this.key = "";
         this.restoreSave();
+        super._registerDom(this.dom);
     }
     
     restoreSave(){
@@ -127,6 +127,7 @@ class Container extends DraggableElement {
     }
     
     remove() {
+        super.remove();
         function removeChildren(el){
             SmartDashboard.removeWidget(el);
             if(el.getChildren){

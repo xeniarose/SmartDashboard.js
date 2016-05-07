@@ -92,23 +92,46 @@ SmartDashboard.createWindowCoordinates = function(width, height){
 }
 
 SmartDashboard.showOptions = function () {
+    if(SmartDashboard.optionsWindow){
+        SmartDashboard.optionsWindow.focus();
+        return;
+    }
     var c = SmartDashboard.createWindowCoordinates(500, 500);
     gui.Window.open('options.html', {
         width: 500,
         height: 500,
         x: c.x,
         y: c.y
+    }, function(w){
+        global.SmartDashboard.optionsWindow = w;
+        var win = w.window;
+        w.on("close", function(){
+            delete global.SmartDashboard.optionsWindow;
+            w.close(true);
+        });
     });
 }
 
 SmartDashboard.showAbout = function(){
+    if(SmartDashboard.aboutWindow){
+        SmartDashboard.aboutWindow.focus();
+        return;
+    }
     var c = SmartDashboard.createWindowCoordinates(800, 600);
     gui.Window.open('about.html', {
         frame: false,
+        resizable: false,
         width: 800,
         height: 600,
         x: c.x,
         y: c.y
+    }, function(w){
+        global.SmartDashboard.aboutWindow = w;
+        var win = w.window;
+        w.on("close", function(){
+            delete global.SmartDashboard.aboutWindow;
+            w.close(true);
+        });
     });
 }
 
@@ -148,6 +171,8 @@ SmartDashboard.init = function () {
     }
     global.SmartDashboard = SmartDashboard;
     var data = global.data;
+    
+    FileUtils.makeDataFolders();
 
     SmartDashboard.options = data.options;
    
@@ -159,7 +184,7 @@ SmartDashboard.init = function () {
     }
     
     if(!data.options.theme){
-        data.options.theme = "__default__";
+        data.options.theme = "DriverStation";
     }
     
     if(!data.options.profile){
@@ -245,8 +270,15 @@ SmartDashboard.init = function () {
     }
 
     // make sure data gets saved on exit
-    window.onbeforeunload = SmartDashboard.saveData;
-    process.on('exit', SmartDashboard.saveData);
+    
+    function onExit(){
+        if(!confirm("Exit SmartDashboard.js?")) return;
+        global.SmartDashboard.saveData();
+        gui.App.closeAllWindows();
+        gui.Window.get().close(true);
+    };
+    
+    gui.Window.get().on("close", onExit);
     
     function checkConnection(){
         if(ntcore.isConnected()){

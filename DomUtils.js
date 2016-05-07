@@ -24,7 +24,7 @@ class DomUtils {
         select.innerHTML = "";
         var opt = document.createElement("option");
         opt.value = "__default__";
-        opt.textContent = "default";
+        opt.textContent = "Minimal";
         select.appendChild(opt);
         try {
             FileUtils.forAllFilesInDirectory(FileUtils.getDataLocations().themes, function (file) {
@@ -163,6 +163,14 @@ class DomUtils {
             return false;
         }
         
+        document.onkeyup = function(e){
+            if(e.ctrlKey && (e.which == "e".charCodeAt() || e.which == "E".charCodeAt())){
+                SmartDashboard.setEditable(!SmartDashboard.editable);
+                e.preventDefault();
+                return false;
+            }
+        };
+        
         document.querySelector("#open-profile").onclick = function(e){
             var menu = new gui.Menu();
             
@@ -198,6 +206,14 @@ class DomUtils {
             document.querySelector("#error-screen").classList.remove("active");
         };
     }
+    
+    static getCssRules(styleContent) {
+        var doc = document.implementation.createHTMLDocument(""),
+            styleElement = document.createElement("style");
+        styleElement.textContent = styleContent;
+        doc.body.appendChild(styleElement);
+        return styleElement.sheet.cssRules;
+    };
 }
 
 global.DomUtils = DomUtils;

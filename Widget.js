@@ -17,7 +17,6 @@ class Widget extends DraggableElement {
         this.dom = document.createElement("div");
         this.dom.classList.add("widget");
         this.dom.classList.add("widget-" + this.constructor.name);
-        this.dom.parentWidget = this;
         var self = this;
         this.root = this.dom;
         this.table = typeof table == "string" ? ntcore.getTable(table) : table;
@@ -32,6 +31,7 @@ class Widget extends DraggableElement {
         this.decorators = [];
         this.attachListeners();
         this._render();
+        super._registerDom(this.dom);
         this._update(this.key, this.table.get(this.key, null));
     }
 
@@ -190,6 +190,7 @@ class Widget extends DraggableElement {
     }
 
     remove() {
+        super.remove();
         SmartDashboard.removeWidget(this);
     }
 

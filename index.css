@@ -108,6 +108,7 @@ body, html {
 #entries h3 {
     margin-bottom: 0;
     border-bottom: 1px solid black;
+    width: calc(100% - 20px);
 }
 
 #entries ul {
@@ -194,7 +195,6 @@ body, html {
     position: absolute;
     background: white;
     box-sizing: border-box;
-    border: 1px solid gray;
     white-space: nowrap;
     overflow: hidden;
     min-width: 100px;
