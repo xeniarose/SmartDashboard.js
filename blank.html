@@ -83,7 +83,8 @@
             if(type == "textarea"){
                 inp = document.createElement("textarea");
             }
-            inp.value = def;
+            inp.setAttribute("type", type);
+            inp.setAttribute("value", def);
             inp.onchange = (function(name, cb){
                 return function(e){
                     cb(name, e.target.value);

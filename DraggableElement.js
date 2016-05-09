@@ -188,7 +188,11 @@ class DraggableElement {
                     //console.log(e.screenX, e.screenY, e.clientX, e.clientY);
                     if (self._dragSize) {
                         this.style.width = (e.clientX - sx + ow + 5) + "px";
-                        this.style.height = (e.clientY - sy + oh + 5) + "px";
+                        if(self.aspectRatio){
+                            this.style.height = ((e.clientX - sx + ow + 5) / self.aspectRatio) + "px";
+                        } else {
+                            this.style.height = (e.clientY - sy + oh + 5) + "px";
+                        }
                         self._w = this.offsetWidth;
                         self._h = this.offsetHeight;
                     } else {

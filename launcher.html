@@ -40,9 +40,28 @@
             console.log(e);
         }
         
-        if(data.options.theme){
-            document.write('<link rel="stylesheet" id="theme-css" href="themes/' + data.options.theme + '.css"/>');
+        try {
+            var layouts = FileUtils.getDataLocations().layouts;
+            if (!fs.existsSync(layouts)){
+                fs.mkdirSync(layouts);
+            }
+            var plugins = FileUtils.getDataLocations().plugins;
+            if (!fs.existsSync(plugins)){
+                fs.mkdirSync(plugins);
+            }
+            var themes = FileUtils.getDataLocations().themes;
+            if (!fs.existsSync(themes)){
+                fs.mkdirSync(themes);
+            }
+            
+            var contents = fs.readFileSync("themes/DriverStation.css");
+            fs.writeFileSync(themes + "/DriverStation.css", contents);
+        } catch(e){
+            alert("Error: Failed to create data files");
         }
+        
+        var dataPath = gui.App.dataPath;
+        document.write('<link rel="stylesheet" id="theme-css" href="file:///' + dataPath + "/themes/" + (data.options.theme || "DriverStation") + '.css"/>');
     </script>
 </head>
 

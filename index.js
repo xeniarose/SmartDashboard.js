@@ -136,12 +136,6 @@ SmartDashboard.showAbout = function(){
 }
 
 SmartDashboard.restart = function () {
-    /*var child,
-        win = gui.Window.get();
-    child = child_process.spawn(process.execPath, [process.cwd()], {detached: true});
-    child.unref();
-    win.hide();
-    gui.App.quit();*/
     ntcore.dispose();
     chrome.runtime.reload();
 }
@@ -171,8 +165,6 @@ SmartDashboard.init = function () {
     }
     global.SmartDashboard = SmartDashboard;
     var data = global.data;
-    
-    FileUtils.makeDataFolders();
 
     SmartDashboard.options = data.options;
    

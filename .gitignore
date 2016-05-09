@@ -4,3 +4,7 @@ save.json
 layouts/*.json
 build/
 cache/
+dist/
+*.exe
+*.res
+*.o

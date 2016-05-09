@@ -1,24 +1,16 @@
 class FileUtils {
     static getThemeLocation(){
-        return "themes/" + SmartDashboard.options.theme + ".css";
-    }
-    
-    static makeDataFolders(){
-        var layoutsPath = FileUtils.getDataLocations().layouts;
-        if (!require("fs").existsSync(layoutsPath)){
-            require("fs").mkdirSync(layoutsPath);
-        }
+        return FileUtils.getDataLocations().themes + "/" + SmartDashboard.options.theme + ".css";
     }
     
     static getDataLocations(){
         var dataPath = require("nw.gui").App.dataPath;
-        var installPath = process.cwd();
         return {
-            themes: installPath + "/themes/",
-            plugins: installPath + "/plugins/",
+            themes: dataPath + "/themes/",
+            plugins: dataPath + "/plugins/",
             layouts: dataPath + "/layouts/",
             save: dataPath + "/save.json",
-            dsScript: dataPath + "/ds.bat",
+            dsScript: dataPath + "\\ds.bat",
             frcdata: "C:\\Users\\Public\\Documents\\FRC"
         };
     }
@@ -48,10 +40,9 @@ class FileUtils {
         try {
             var run;
             if(isSdJs){
-                var sdDir = process.cwd();
-                var nwjs = process.execPath;
+                var nwjs = process.execPath.replace("app\\nw.exe", "SmartDashboard.exe");
                 var scriptLocation = FileUtils.getDataLocations().dsScript;
-                fs.writeFileSync(scriptLocation, "\"" + nwjs + "\" \"" + sdDir + "\" --ds-mode %*");
+                fs.writeFileSync(scriptLocation, "\"" + nwjs + "\" --ds-mode %*");
                 run = scriptLocation;
                 run = "\"\"" + run.replace(/\\/g, "\\\\") + "\"\"";
             } else {

@@ -28,9 +28,10 @@ class WidgetUtils {
     }
     
     static promptNewWidget(widgetType){
-        var isContainer = SmartDashboard.widgetTypes[widgetType].dataType == "container";
+        var isUnlinked = SmartDashboard.widgetTypes[widgetType].dataType == "container"
+            || SmartDashboard.widgetTypes[widgetType].widget.prototype instanceof UnlinkedWidget;
         var nameRaw = "";
-        if(!isContainer){
+        if(!isUnlinked){
             nameRaw = prompt("SmartDashboard variable:");
             if (nameRaw == null || nameRaw == "")
                 return;

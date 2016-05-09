@@ -9,7 +9,7 @@
     "icon": "assets/favicon.png",
     "frame": false,
     "width": 300,
-    "height": 20,
+    "height": 40,
     "position": "center",
     "transparent": false,
     "show": false

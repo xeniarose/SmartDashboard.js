@@ -212,10 +212,7 @@ limitations under the License.
         }
         
         document.querySelector("#chromium-credits").onclick = function(){
-            var p1 = process.cwd();
-            var p2 = process.execPath.replace("nw.exe", "credits.html");
-            
-            require("nw.gui").Window.open(require("path").relative(p1, p2), {
+            require("nw.gui").Window.open("chromium-credits.html", {
                 frame: true,
                 width: 800,
                 height: 600

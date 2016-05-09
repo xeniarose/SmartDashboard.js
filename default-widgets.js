@@ -536,3 +536,85 @@ class FlexContainer extends Container {
 }
 
 SmartDashboard.registerWidget(FlexContainer, "container");
+
+class StaticImage extends UnlinkedWidget {
+    render(){
+        this._img = document.createElement("div");
+        this._img.classList.add("image");
+        this.dom.appendChild(this._img);
+        
+        this._fakeImg = document.createElement("img");
+        var self = this;
+        this._fakeImg.addEventListener('load', function() {
+            var width = this.naturalWidth;
+            var height = this.naturalHeight;
+            //self._img.style.minWidth = width + "px";
+            //self._img.style.minHeight = height + "px";
+            self.aspectRatio = width / height;
+        });
+        
+        this.updateImg(this.saveData.imagePath || "");
+    }
+    
+    onNew(){
+        this._img.style.minWidth = "100px";
+        this._img.style.minHeight = "100px";
+    }
+    
+    updateImg(path){
+        var src = this._fakeImg.src = "file:///" + path.replace(/\\/g, "/");
+        this._img.style.backgroundImage = "url(\"" + src + "\")";
+    }
+    
+    createPropertiesView(win){
+        var self = this;
+        function cb(k, v){
+            self.saveData.imagePath = v;
+            self.updateImg(self.saveData.imagePath);
+        }
+        
+        win.addField("image", "file", self.saveData.imagePath || "", cb);
+    }
+}
+SmartDashboard.registerWidget(StaticImage, "unlinked");
+
+class MjpegStream extends UnlinkedWidget {
+    render(){
+        this._img = document.createElement("img");
+        this._img.classList.add("stream");
+        this.dom.appendChild(this._img);
+        var self = this;
+        this._img.addEventListener('load', function() {
+            var width = this.naturalWidth;
+            var height = this.naturalHeight;
+            //self._img.style.minWidth = width + "px";
+            //self._img.style.minHeight = height + "px";
+            self.aspectRatio = width / height;
+        });
+        
+        this.saveData.mjpegUrl = this.saveData.mjpegUrl || "http://10.te.am.11/mjpg/video.mjpg";
+        
+        this.updateImg(this.saveData.mjpegUrl);
+    }
+    
+    onNew(){
+        this._img.style.minWidth = "100px";
+        this._img.style.minHeight = "100px";
+    }
+    
+    updateImg(path){
+        this._img.src = path;
+    }
+    
+    createPropertiesView(win){
+        var self = this;
+        function cb(k, v){
+            self.saveData.mjpegUrl = v;
+            self.updateImg(self.saveData.mjpegUrl);
+        }
+        
+        win.addField("url", "text", self.saveData.mjpegUrl, cb);
+    }
+}
+
+SmartDashboard.registerWidget(MjpegStream, "unlinked");

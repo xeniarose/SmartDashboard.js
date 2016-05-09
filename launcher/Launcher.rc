@@ -1,0 +1,26 @@
+id ICON "favicon.ico"
+42 BITMAP "splash.bmp"
+1 VERSIONINFO
+FILEVERSION     1,0,0,0
+PRODUCTVERSION  1,0,0,0
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904E4"
+    BEGIN
+      VALUE "CompanyName", "SmartDashboard.js"
+      VALUE "FileDescription", "SmartDashboard.js"
+      VALUE "FileVersion", "1.0"
+      VALUE "InternalName", "SmartDashboard.js"
+      VALUE "LegalCopyright", "2016 Erik Uhlmann"
+      VALUE "OriginalFilename", "SmartDashboard.exe"
+      VALUE "ProductName", "SmartDashboard.js"
+      VALUE "ProductVersion", "1.0"
+    END
+  END
+
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x409, 1252
+  END
+END

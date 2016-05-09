@@ -500,3 +500,19 @@ input[type=checkbox].redgreen:checked {
     padding: 0px 10px;
 }
 
+.widget.widget-StaticImage {
+    background-color: transparent;
+}
+
+.widget.widget-MjpegStream .stream {
+    width: 100%;
+    height: 100%;
+}
+
+.widget-StaticImage .image {
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: 50% 50%;
+    width: 100%;
+    height: 100%;
+}
