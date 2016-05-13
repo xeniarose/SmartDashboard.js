@@ -1,15 +1,14 @@
-/* roboto-slab-regular - latin */
 @font-face {
-  font-family: 'Roboto Slab';
-  font-style: normal;
-  font-weight: 400;
-  src: url('../fonts/roboto-slab-v6-latin-regular.eot'); /* IE9 Compat Modes */
-  src: local('Roboto Slab Regular'), local('RobotoSlab-Regular'),
-       url('../fonts/roboto-slab-v6-latin-regular.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
-       url('../fonts/roboto-slab-v6-latin-regular.woff2') format('woff2'), /* Super Modern Browsers */
-       url('../fonts/roboto-slab-v6-latin-regular.woff') format('woff'), /* Modern Browsers */
-       url('../fonts/roboto-slab-v6-latin-regular.ttf') format('truetype'), /* Safari, Android, iOS */
-       url('../fonts/roboto-slab-v6-latin-regular.svg#RobotoSlab') format('svg'); /* Legacy iOS */
+    font-family: 'Source Sans Pro';
+    font-style: normal;
+    font-weight: 400;
+    src: url('fonts/SourceSansPro-Regular.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Source Sans Pro';
+    font-style: normal;
+    font-weight: 700;
+    src: url('fonts/SourceSansPro-Bold.ttf') format('truetype');
 }
 
 @keyframes scale-up-anim {
@@ -44,7 +43,10 @@ body, html {
     height: 100%;
     margin: 0;
     padding: 0;
-    font-family: 'Roboto Slab', serif;
+}
+
+body, html, button, input {
+    font-family: 'Source Sans Pro', sans-serif;
 }
 
 ::-webkit-scrollbar {
@@ -136,6 +138,28 @@ body, html {
     overflow: auto;
     max-height: 0;
     opacity: 0;
+}
+
+#entries .list li {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#entries .list>li {
+    padding-right: 20px;
+}
+
+#entries h3 {
+    display: flex;
+}
+
+#entries h3 input {
+    flex: 1;
+    margin-left: 1em;
+    padding-left: 0.5em;
 }
 
 #entries .list li:not(.none)>.entry-add {

@@ -33,6 +33,11 @@
             border-top: 1px solid black;
             width: 100%;
             text-align: right;
+            -webkit-app-region: drag;
+        }
+        
+        .button-pane button {
+            -webkit-app-region: no-drag;
         }
         
         h3 {
@@ -46,11 +51,18 @@
             font-size: 12px;
             float: right;
         }
+        
+        .dialog-header {
+            margin: 0;
+            padding-left: 1em;
+            -webkit-app-region: drag;
+        }
     </style>
 </head>
 
 <body class="options">
     <form action="javascript:void(0)" onsubmit="save()">
+        <h2 class="dialog-header">Options</h2>
         <div id="container">
             <fieldset>
                 <legend>Connection</legend>

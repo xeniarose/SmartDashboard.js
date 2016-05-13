@@ -30,6 +30,10 @@ class Graph extends Widget {
         this.root.appendChild(this.graph);
         
         this.items = [];
+        
+        if(!this.saveData.maxNumPoints){
+            this.saveData.maxNumPoints = 100;
+        }
 
         this.dataset = new vis.DataSet(this.items);
         this.visOptions = {
@@ -57,6 +61,14 @@ class Graph extends Widget {
         setTimeout(function(){
             self.mouseUpHandler();
         }, 1000);
+    }
+    
+    createPropertiesView(win){
+        var self = this;
+        this._propCb = function(k, v){
+            self.saveData.maxNumPoints = parseInt(v);
+        }
+        win.addField("Points to keep", "number", self.saveData.maxNumPoints || 100, this._propCb);
     }
     
     setEditable(editable){
@@ -87,6 +99,9 @@ class Graph extends Widget {
             x: now,
             y: this.val
         });
+        while(this.dataset.length > this.saveData.maxNumPoints && this.dataset.length > 0){
+            this.dataset.remove(this.dataset.get()[0].id);
+        }
     }
     
     destroy(){

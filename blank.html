@@ -25,10 +25,21 @@
             border-spacing: 0;
         }
         
+        .form-table {
+            width: 100%;
+            height: 100%;
+            display: table;
+        }
+        
         .button-pane {
             border-top: 1px solid black;
             width: 100%;
             text-align: right;
+            -webkit-app-region: drag;
+        }
+        
+        .button-pane button {
+            -webkit-app-region: no-drag;
         }
         
         .form-items label {
@@ -40,30 +51,43 @@
         .form-items label span {
             text-align: right;
             vertical-align: top;
+            display: table-cell;
+            padding-right: 0.2em;
+            white-space: nowrap;
         }
         
-        .form-items input, .form-items select, .form-items label span, .form-items textarea {
+        .form-items .input-container {
             display: table-cell;
             border-collapse: collapse;
             border-spacing: 0;
-            padding-right: 0.2em;
+            width: 100%;
         }
         
-        textarea {
+        input, textarea {
             box-sizing: border-box;
             width: 100%;
             resize: vertical;
+        }
+        
+        .dialog-header {
+            margin: 0;
+            padding-left: 1em;
+            -webkit-app-region: drag;
         }
     </style>
 </head>
 
 <body class="properties">
     <form action="javascript:void(0)">
+        <h3 class="dialog-header">Properties</h3>
         <div class="form-items">
-            
+            <div class="form-table">
+                
+            </div>
         </div>
         
         <div class="align-bottom text-right button-pane">
+            <button type="button">Update</button>
             <button type="button" onclick="window.close()">Close</button>
         </div>
     </form>
@@ -80,9 +104,12 @@
             text.textContent = name + ": ";
             label.appendChild(text);
             var inp = document.createElement("input");
+            var cont = document.createElement("div");
+            cont.classList.add("input-container");
             if(type == "textarea"){
                 inp = document.createElement("textarea");
             }
+            cont.appendChild(inp);
             inp.setAttribute("type", type);
             inp.setAttribute("value", def);
             inp.onchange = (function(name, cb){
@@ -90,7 +117,7 @@
                     cb(name, e.target.value);
                 };
             })(name, callback);
-            label.appendChild(inp);
+            label.appendChild(cont);
             
             if(autocomplete){
                 var dl = document.createElement("datalist");
@@ -104,7 +131,7 @@
                 inp.setAttribute("list", dl.id);
             }
             
-            document.querySelector(".form-items").appendChild(label);
+            document.querySelector(".form-table").appendChild(label);
         }
     </script>
 </body>

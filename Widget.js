@@ -69,6 +69,7 @@ class Widget extends DraggableElement {
                             SmartDashboard.removeWidget(self);
                             SmartDashboard.addWidget(widget);
                             widget.resetSize();
+                            widget.setPosition(pos.x + pos.w / 2 - widget._w / 2, pos.y + pos.h / 2 - widget._h / 2, widget._w, widget._h);
                             if(self.parent){
                                 self.parent.addChild(widget, true);
                             }

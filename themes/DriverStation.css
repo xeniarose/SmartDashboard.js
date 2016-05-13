@@ -7,7 +7,7 @@ body, .container {
     background: #1A1A1A;
 }
 
-.widget, .button-pane, #entries {
+.widget, .button-pane, #entries, .dialog-header {
     background: #464646;
 }
 
@@ -44,10 +44,14 @@ label {
     color: white;
 }
 
-input[type=text], input[type=number], textarea {
+input[type=text], input[type=number], input[type=search], textarea {
     color: black;
     border: 1px solid #282828;
     background: #D4D4D4;
+}
+
+::-webkit-input-placeholder {
+    color: #777;
 }
 
 .connection-status {
@@ -76,8 +80,16 @@ a {
     border: 1px solid #010101;
 }
 
+#entries li {
+    color: #01D3FF;
+}
+
 .button-pane {
     border-top: 1px solid darkgray;
+}
+
+.dialog-header {
+    border-bottom: 1px solid darkgray;
 }
 
 .widget-array-container {

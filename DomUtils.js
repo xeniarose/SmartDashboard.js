@@ -64,6 +64,15 @@ class DomUtils {
         if(SmartDashboard._entries && JSON.stringify(entries) == JSON.stringify(SmartDashboard._entries)){
             return;
         }
+        var datalist = document.querySelector("#entry-search-items");
+        datalist.innerHTML = "";
+        var entriesRaw = ntcore.getAllEntries();
+        entriesRaw.sort();
+        entriesRaw.forEach(function(el){
+            var opt = document.createElement("option");
+            opt.value = el.substring(1); // remove leading slash, which screws up type detection
+            datalist.appendChild(opt);
+        });
         SmartDashboard._entries = entries;
         var root = document.querySelector("#entries .list");
         root.innerHTML = "";
@@ -80,7 +89,11 @@ class DomUtils {
                 btn.textContent = "+";
                 a.href = "javascript:void(0)";
                 a.textContent = key;
-                a.dataset.path = parentPath + key;
+                var nameRaw = parentPath + key;
+                var type = WidgetUtils.getTypeForEntry(nameRaw);
+                a.dataset.path = nameRaw;
+                a.dataset.type = type;
+                a.setAttribute("title", nameRaw + "\n" + type.substring(0,1).toUpperCase() + type.substring(1));
                 btn.onclick = function(){
                     if(this.parentElement.classList.contains("open")){
                         this.parentElement.classList.remove("open");
@@ -93,7 +106,7 @@ class DomUtils {
                 a.onclick = function(){
                     var nameRaw = this.dataset.path;
                     
-                    var widgetType = WidgetUtils.getTypeForEntry(nameRaw);
+                    var widgetType = this.dataset.type;
                     
                     WidgetUtils.defaultNewWidget(widgetType, nameRaw);
                 };
@@ -124,6 +137,18 @@ class DomUtils {
     
     static registerDocumentEventHandlers(){
         document.querySelector("#entries").onmouseover = DomUtils.renderVariableEntries;
+        document.querySelector("#entry-search").onchange = function(){
+            var nameRaw = this.value;
+            if(nameRaw.trim() == "") return;
+            this.blur();
+            this.value = "";
+            var widgetType = WidgetUtils.getTypeForEntry(nameRaw);
+            WidgetUtils.defaultNewWidget(widgetType, nameRaw);
+        };
+        document.querySelector("#entry-search").onblur = function(){
+            this.value = "";
+        }
+        
         var dashboard = document.querySelector("#dashboard");
        
         dashboard.onmousemove = WidgetUtils.forwardEvent.bind(WidgetUtils, "onmousemove");

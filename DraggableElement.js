@@ -72,7 +72,8 @@ class DraggableElement {
             width: 350,
             height: 400,
             x: c.x,
-            y: c.y
+            y: c.y,
+            frame: false
         }, function (w) {
             var win = w.window;
             self._propsWindow = win;

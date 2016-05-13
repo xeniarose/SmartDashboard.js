@@ -1,7 +1,7 @@
 class WidgetUtils {
     static getDefaultWidget(type){
         var entry = SmartDashboard.options["default-" + type];
-        if(typeof entry == "undefined"){
+        if(typeof entry == "undefined" || entry == ""){
             var first = null;
             for(var widgetType in SmartDashboard.widgetTypes){
                 if(first == null) first = widgetType;

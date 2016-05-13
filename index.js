@@ -98,6 +98,7 @@ SmartDashboard.showOptions = function () {
     }
     var c = SmartDashboard.createWindowCoordinates(500, 500);
     gui.Window.open('options.html', {
+        frame: false,
         width: 500,
         height: 500,
         x: c.x,

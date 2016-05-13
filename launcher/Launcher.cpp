@@ -8,6 +8,7 @@
 
 
 static BOOL sdIsUp = false;
+static SPLASH mySplash;
 
 BOOL CALLBACK enumWindowsProc(HWND hWnd, LPARAM lParam){
     int length = ::GetWindowTextLength( hWnd );
@@ -29,12 +30,7 @@ BOOL CALLBACK enumWindowsProc(HWND hWnd, LPARAM lParam){
     return TRUE;
 }
 
-int main(){
-    SPLASH mySplash;
-    mySplash.Init(42);
-    mySplash.Show();
-    
-    
+void SmartDashboardInit(){
     STARTUPINFO info={sizeof(info)};
     PROCESS_INFORMATION processInfo;
     
@@ -72,14 +68,16 @@ int main(){
         CloseHandle(processInfo.hProcess);
         CloseHandle(processInfo.hThread);
     }
+    exit(0);
 }
 
-LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM){
-    MSG msg;
-    while (GetMessage(&msg, NULL, 0, 0)) {
+int main(){
+    mySplash.Init();
+    HANDLE sdInit = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) &SmartDashboardInit, NULL, 0, NULL);
+    
+    MSG msg = {0};
+    while(GetMessage(&msg, NULL, 0, 0) > 0){
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
-
-    return (int) msg.wParam;
 }
