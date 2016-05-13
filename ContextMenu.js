@@ -74,11 +74,12 @@ ContextMenu.defs = {
         {
             label: "New Layout",
             click: function(){
-                var name = prompt("Layout name:");
-                if(name == null) return;
-                name = name.replace(/[<>:"\/\\\|\?\*]/g, "").trim();
-                if(name == "") return;
-                SmartDashboard.switchProfile(name);
+                SmartDashboard.prompt("Layout name:", function(name){
+                    if(name == null) return;
+                    name = name.replace(/[<>:"\/\\\|\?\*]/g, "").trim();
+                    if(name == "") return;
+                    SmartDashboard.switchProfile(name);
+                });
             }
         },
         {

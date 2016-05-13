@@ -101,6 +101,10 @@ class DraggableElement {
         });
     }
     
+    onInserted(){
+        
+    }
+    
     setEditable(flag){
         var self = this;
         this.editable = flag;

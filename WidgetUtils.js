@@ -23,6 +23,7 @@ class WidgetUtils {
             var pos = widget.getPosition();
             widget.setPosition(e.clientX + document.body.scrollLeft - pos.w / 2, e.clientY + document.body.scrollTop - pos.h / 2);
             screen.classList.remove("active");
+            widget.onInserted();
         };
         screen.classList.add("active");
     }
@@ -30,13 +31,15 @@ class WidgetUtils {
     static promptNewWidget(widgetType){
         var isUnlinked = SmartDashboard.widgetTypes[widgetType].dataType == "container"
             || SmartDashboard.widgetTypes[widgetType].widget.prototype instanceof UnlinkedWidget;
-        var nameRaw = "";
         if(!isUnlinked){
-            nameRaw = prompt("SmartDashboard variable:");
-            if (nameRaw == null || nameRaw == "")
-                return;
+            SmartDashboard.prompt("SmartDashboard variable:", function(nameRaw){
+                if (nameRaw != null || nameRaw.trim() != ""){
+                    WidgetUtils.newWidget(SmartDashboard.widgetTypes[widgetType].widget, nameRaw);
+                }
+            });
+        } else {
+            WidgetUtils.newWidget(SmartDashboard.widgetTypes[widgetType].widget, "");
         }
-        WidgetUtils.newWidget(SmartDashboard.widgetTypes[widgetType].widget, nameRaw);
     }
     
     static defaultNewWidget(widgetType, nameRaw){

@@ -87,8 +87,8 @@ class Widget extends DraggableElement {
         menu.append(new gui.MenuItem({
             label: "Change Variable Name",
             click: function () {
-                setTimeout(function () {
-                    var nameRaw = prompt("New name:", self.table.getTablePath() + "/" + self.key);
+                SmartDashboard.prompt("New name:", self.table.getTablePath() + "/" + self.key, function(nameRaw){
+                        
                     if (nameRaw == null || nameRaw == "")
                         return;
                     var pos = self.getPosition();
@@ -101,7 +101,7 @@ class Widget extends DraggableElement {
                     if(self.parent){
                         self.parent.addChild(widget, true);
                     }
-                }, 1);
+                });
             }
         }));
         menu.append(new gui.MenuItem({

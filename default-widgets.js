@@ -1,3 +1,40 @@
+class ObjectDetector extends Widget {
+    render(){
+        this.root.appendChild(document.createTextNode("Can't detect object type"));
+    }
+    
+    onInserted(){
+        outer:
+        for(var widgetTypeName in SmartDashboard.widgetTypes){
+            var widgetType = SmartDashboard.widgetTypes[widgetTypeName];
+            if(widgetType.dataType == "object" && widgetType.data && widgetType.data.objectDetect){
+                for(var key of widgetType.data.objectDetect){
+                    if(typeof this.table.get(this.key + "/" + key) == "undefined"){
+                        continue outer;
+                    }
+                }
+                this.replaceWith(widgetType.widget);
+                return;
+            }
+        }
+        this.dom.classList.add("no-detect");
+    }
+    
+    replaceWith(widgetType){
+        var pos = this.getPosition();
+        var widget = new widgetType(this.table.getTablePath(), this.key);
+        widget.setPosition(pos.x, pos.y, pos.w, pos.h);
+        SmartDashboard.removeWidget(this);
+        SmartDashboard.addWidget(widget);
+        widget.resetSize();
+        widget.setPosition(pos.x + pos.w / 2 - widget._w / 2, pos.y + pos.h / 2 - widget._h / 2, widget._w, widget._h);
+        if(this.parent){
+            this.parent.addChild(widget, true);
+        }
+    }
+}
+SmartDashboard.registerWidget(ObjectDetector, "object");
+
 class NumberBox extends Widget {
     render() {
         var el = document.createElement("input");
@@ -400,7 +437,7 @@ class Chooser extends Widget {
         this._select.value = this.valSelected;
     }
 }
-SmartDashboard.registerWidget(Chooser, "object");
+SmartDashboard.registerWidget(Chooser, "object", {objectDetect: ["options", "selected"]});
 
 class TextBox extends Widget {
     render() {
@@ -477,7 +514,7 @@ class Command extends Widget {
     }
 }
 
-SmartDashboard.registerWidget(Command, "object");
+SmartDashboard.registerWidget(Command, "object", {objectDetect: ["running"]});
 
 class FlowContainer extends Container {
     getDragMode(){

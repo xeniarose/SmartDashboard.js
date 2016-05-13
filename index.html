@@ -29,15 +29,29 @@
     <div id="place-screen">
         <h1>Click anywhere to place</h1>
     </div>
-    <div id="error-screen">
+    <div id="input-screen" class="dialog-screen">
+        <div class="dialog">
+            <h3 class="input-title"></h3>
+            <div class="input-content">
+                <input type="text" class="input-content-input" placeholder="Enter input here" />
+            </div>
+            <div class="button-pane">
+                <button class="button-yes" type="button">OK</button>
+                <button class="button-no" type="button">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <div id="error-screen" class="dialog-screen">
         <div class="dialog">
             <h3>SmartDashboard.js encountered an error</h3>
             <pre class="error-details-pre"><code class="error-details"></code></pre>
             <div class="button-pane">
+                <a class="report-error" href="javascript:void(0)">Report this error</a>
                 <button class="restart" type="button">Restart</button><button class="close" type="button">Dismiss</button>
             </div>
         </div>
     </div>
+    
     <script>
         const gui = require('nw.gui');
         const ntcore = require("./ntcore_node");

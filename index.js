@@ -20,13 +20,58 @@ SmartDashboard.handleError = function(e, notSerious) {
     if(!notSerious){
         document.querySelector("#error-screen .error-details").textContent = msg;
         document.querySelector("#error-screen").classList.add("active");
+        
+        document.querySelector("#error-screen .report-error").onclick = function(){
+            gui.Shell.openExternal("https://github.com/erikuhlmann/SmartDashboard.js/issues/new?body="
+                                   + encodeURIComponent("```\n" + msg + "\n```"));
+        };
     }
 }
 
-SmartDashboard.registerWidget = function (widget, dataType) {
+SmartDashboard.prompt = function(msg, arg1, arg2, hideInputBox){
+    var initialVal = null;
+    var cb = function(){}
+    if(typeof arg1 == "string") initialVal = arg1;
+    if(typeof arg2 == "string") initialVal = arg2;
+    if(typeof arg1 == "function") cb = arg1;
+    if(typeof arg2 == "function") cb = arg2;
+    
+    document.querySelector("#input-screen h3").textContent = msg;
+    document.querySelector("#input-screen input").value = initialVal ? initialVal : "";
+    if(hideInputBox){
+        document.querySelector("#input-screen input").style.display = "none";
+    } else {
+        document.querySelector("#input-screen input").style.display = "block";
+    }
+    
+    document.querySelector("#input-screen button.button-yes").onclick = function(){
+        document.querySelector("#input-screen").classList.remove("active");
+        cb(document.querySelector("#input-screen input").value);
+    };
+    document.querySelector("#input-screen button.button-no").onclick = function(){
+        document.querySelector("#input-screen").classList.remove("active");
+        cb(null);
+    };
+    document.querySelector("#input-screen").classList.add("active");
+    document.querySelector("#input-screen input").focus();
+    document.querySelector("#input-screen input").onkeydown = function(e){
+        if(e.which == 13){
+            document.querySelector("#input-screen button.button-yes").onclick();
+        }
+    };
+}
+
+SmartDashboard.confirm = function(msg, cb){
+    SmartDashboard.prompt(msg, function(v){
+        cb(v != null);
+    }, null, true);
+};
+
+SmartDashboard.registerWidget = function (widget, dataType, data) {
     SmartDashboard.widgetTypes[widget.name] = {
         widget: widget,
-        dataType: dataType
+        dataType: dataType,
+        data: data
     };
 }
 
@@ -265,10 +310,13 @@ SmartDashboard.init = function () {
     // make sure data gets saved on exit
     
     function onExit(){
-        if(!confirm("Exit SmartDashboard.js?")) return;
-        global.SmartDashboard.saveData();
-        gui.App.closeAllWindows();
-        gui.Window.get().close(true);
+        SmartDashboard.confirm("Exit SmartDashboard.js?", function(v){
+            if(v){
+                global.SmartDashboard.saveData();
+                gui.App.closeAllWindows();
+                gui.Window.get().close(true);
+            }
+        });
     };
     
     gui.Window.get().on("close", onExit);
@@ -302,6 +350,7 @@ SmartDashboard.loadWidgets = function(){
         var widget = new SmartDashboard.widgetTypes[wData.type].widget(wData.table, wData.key, wData.data);
         widget.setPosition(wData.x, wData.y, wData.w, wData.h);
         SmartDashboard.addWidget(widget);
+        widget.onInserted();
         
         if(wData.children){
             for (var childData of wData.children){
