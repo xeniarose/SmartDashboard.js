@@ -1,0 +1,91 @@
+<project name="SmartDashboard.js" default="dist" basedir=".">
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
+    
+    <property name="nw.version" value="v0.14.1" />
+    <property name="nw.versionstring" value="nwjs-${nw.version}-win-x64" />
+    
+    <target name="sd.clean">
+        <delete>
+            <fileset dir="dist">
+                <include name="*.zip"/>
+                <include name="*.exe"/>
+                <include name="app/**/*" />
+            </fileset>
+        </delete>
+    </target>
+    
+    <target name="nw.check">
+        <condition property="nw.exists">
+            <available file="${nw.versionstring}" type="dir"/>
+        </condition>
+    </target>
+    
+    <target name="nw.download" depends="nw.check" unless="nw.exists">
+        <echo message="Downloading nwjs ${nw.version}" />
+        <get dest="${nw.versionstring}.zip" verbose="true">
+            <url url="http://dl.nwjs.io/${nw.version}/${nw.versionstring}.zip" />
+        </get>
+        <unzip src="${nw.versionstring}.zip" dest="." />
+        <delete file="${nw.versionstring}.zip" />
+    </target>
+    
+    <target name="sd.package" depends="sd.clean,nw.download">
+        <mkdir dir="dist/app" />
+        <copy todir="dist/app">
+            <fileset dir="${nw.versionstring}"/>
+        </copy>
+        <zip destfile="dist/app/SmartDashboard.nw">
+            <fileset dir="." includes="assets/*,fonts/*,themes/*,*.html,*.js,*.css,*.json" />
+            <fileset dir=".">
+                <include name="ntcore_node.node" />
+                <include name="LICENSE" />
+                <include name="Readme.md" />
+            </fileset>
+        </zip>
+        <move file="dist/app/nw.exe" tofile="dist/app/nw_.exe" />
+        <concat destfile="dist/app/nw.exe" binary="yes">
+            <fileset file="dist/app/nw_.exe" />
+            <fileset file="dist/app/SmartDashboard.nw" />
+        </concat>
+        <delete>
+            <fileset dir="dist/app">
+                <include name="nw_.exe"/>
+                <include name="SmartDashboard.nw"/>
+            </fileset>
+        </delete>
+    </target>
+    
+    <target name="sd.get-version">
+        <loadfile property="sd.packagefile" srcfile="package.json"/>
+        <propertyregex property="sd.version" input="${sd.packagefile}"
+                       regexp="&quot;version&quot;:\s*&quot;([^,]+)&quot;," select="\1" />
+        <echo message="SmartDashboard.js version: ${sd.version}" />
+    </target>
+    
+    <target name="sd.compile-launcher" depends="sd.clean">
+        <exec executable="windres" dir="launcher">
+            <arg value="Launcher.rc" />
+            <arg value="-O" />
+            <arg value="coff" />
+            <arg value="-o" />
+            <arg value="Launcher.res" />
+        </exec>
+        
+        <exec executable="g++" dir="launcher">
+            <arg value="SPLASH.cpp" />
+            <arg value="Launcher.cpp" />
+            <arg value="Launcher.res" />
+            <arg value="-o" />
+            <arg value="..\dist\SmartDashboard.exe" />
+            <arg value="-mwindows" />
+            <arg value="-static-libgcc" />
+            <arg value="-static-libstdc++" />
+        </exec>
+    </target>
+    
+    <target name="dist" depends="sd.package,sd.compile-launcher,sd.get-version">
+        <zip destfile="dist/SmartDashboard.js.${sd.version}.zip">
+            <fileset dir="dist" includes="app/*,SmartDashboard.exe" />
+        </zip>
+    </target>
+</project>

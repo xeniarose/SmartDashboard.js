@@ -1,4 +1,6 @@
 nwjs-sdk-v0.14.1-win-x64/
+nwjs-v0.14.1-win-x64/
+*.zip
 *.bat
 save.json
 layouts/*.json
