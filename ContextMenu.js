@@ -53,8 +53,7 @@ ContextMenu.defs = {
         {
             label: "Exit",
             click: function(){
-                SmartDashboard.saveData();
-                window.close();
+                SmartDashboard.onExit();
             }
         },
         "---",

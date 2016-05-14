@@ -33,7 +33,7 @@ class WidgetUtils {
             || SmartDashboard.widgetTypes[widgetType].widget.prototype instanceof UnlinkedWidget;
         if(!isUnlinked){
             SmartDashboard.prompt("SmartDashboard variable:", function(nameRaw){
-                if (nameRaw != null || nameRaw.trim() != ""){
+                if (nameRaw != null && nameRaw.trim() != ""){
                     WidgetUtils.newWidget(SmartDashboard.widgetTypes[widgetType].widget, nameRaw);
                 }
             });

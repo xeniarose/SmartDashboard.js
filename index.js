@@ -29,6 +29,7 @@ SmartDashboard.handleError = function(e, notSerious) {
 }
 
 SmartDashboard.prompt = function(msg, arg1, arg2, hideInputBox){
+    SmartDashboard.window.focus();
     var initialVal = null;
     var cb = function(){}
     if(typeof arg1 == "string") initialVal = arg1;
@@ -57,6 +58,8 @@ SmartDashboard.prompt = function(msg, arg1, arg2, hideInputBox){
     document.querySelector("#input-screen input").onkeydown = function(e){
         if(e.which == 13){
             document.querySelector("#input-screen button.button-yes").onclick();
+        } else if(e.which == 27){
+            document.querySelector("#input-screen button.button-no").onclick();
         }
     };
 }
@@ -213,7 +216,8 @@ SmartDashboard.init = function () {
     var data = global.data;
 
     SmartDashboard.options = data.options;
-   
+    SmartDashboard.window = gui.Window.get();
+    
     if (!data.options.port) {
         data.options.port = ntcore.DEFAULT_PORT;
     }
@@ -307,19 +311,19 @@ SmartDashboard.init = function () {
         gui.Window.get().on("resize", windowCallback);*/
     }
 
+    gui.App.on("open", (function(win, args){
+        win.focus();
+        
+        if(args.indexOf("--ds-mode") > -1 && SmartDashboard.options.useDsModeSwitch){
+            SmartDashboard.options.dsMode = true;
+            SmartDashboard.saveData();
+            SmartDashboard.restart();
+        }
+    }).bind(null, gui.Window.get()));
+    
     // make sure data gets saved on exit
     
-    function onExit(){
-        SmartDashboard.confirm("Exit SmartDashboard.js?", function(v){
-            if(v){
-                global.SmartDashboard.saveData();
-                gui.App.closeAllWindows();
-                gui.Window.get().close(true);
-            }
-        });
-    };
-    
-    gui.Window.get().on("close", onExit);
+    gui.Window.get().on("close", SmartDashboard.onExit);
     
     function checkConnection(){
         if(ntcore.isConnected()){
@@ -337,6 +341,16 @@ SmartDashboard.init = function () {
         gui.Window.get().show();
     }, 500); // wait for things to load a bit
 }
+
+SmartDashboard.onExit = function(){
+    SmartDashboard.confirm("Exit SmartDashboard.js?", function(v){
+        if(v){
+            global.SmartDashboard.saveData();
+            gui.App.closeAllWindows();
+            gui.Window.get().close(true);
+        }
+    });
+};
 
 SmartDashboard.loadWidgets = function(){
     var widgets = [];

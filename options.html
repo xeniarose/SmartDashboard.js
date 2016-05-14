@@ -6,7 +6,6 @@
     <title>SmartDashboard.js - Options</title>
     <link rel="stylesheet" href="index.css" />
     <script>
-        // major hacks to disable the animation
         document.write('<link rel="stylesheet" id="theme-css" href="' + global.FileUtils.getThemeLocation() + '"/>');
     </script>
     <style>
@@ -190,11 +189,12 @@
             global.SmartDashboard.setTheme(global.SmartDashboard.options.theme);
             global.SmartDashboard.setTheme(global.SmartDashboard.options.theme, document.querySelector("#theme-css"));
             global.SmartDashboard.saveData();
-            if(restartRequired && confirm("Restart required for changes to take effect. Restart now?")){
-                global.SmartDashboard.restart();
-            } else {
-                window.close();
+            if(restartRequired){
+                global.SmartDashboard.confirm("Restart required for changes to take effect. Restart now?", function(v){
+                    if(v) global.SmartDashboard.restart();
+                });
             }
+            window.close();
         }
     </script>
 </body>

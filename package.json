@@ -14,6 +14,5 @@
     "transparent": false,
     "show": false
   },
-  "js-flags": "--expose-gc",
-  "single-instance": false
+  "js-flags": "--expose-gc"
 }
