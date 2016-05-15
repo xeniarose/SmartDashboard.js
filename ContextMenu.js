@@ -87,6 +87,21 @@ ContextMenu.defs = {
                 gui.Shell.openExternal(FileUtils.getDataLocations().layouts);
             }
         }
+    ],
+    "exit": [
+        {
+            label: "Restart",
+            click: function(){
+                SmartDashboard.saveData();
+                SmartDashboard.restart();
+            }
+        },
+        {
+            label: "Exit",
+            click: function(){
+                SmartDashboard.onExit();
+            }
+        }
     ]
 };
 

@@ -32,7 +32,9 @@ class WidgetUtils {
         var isUnlinked = SmartDashboard.widgetTypes[widgetType].dataType == "container"
             || SmartDashboard.widgetTypes[widgetType].widget.prototype instanceof UnlinkedWidget;
         if(!isUnlinked){
+            document.querySelector("#input-screen input").setAttribute("list", "entry-search-items");
             SmartDashboard.prompt("SmartDashboard variable:", function(nameRaw){
+                document.querySelector("#input-screen input").setAttribute("list", null);
                 if (nameRaw != null && nameRaw.trim() != ""){
                     WidgetUtils.newWidget(SmartDashboard.widgetTypes[widgetType].widget, nameRaw);
                 }

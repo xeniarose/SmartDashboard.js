@@ -94,6 +94,7 @@ SmartDashboard.setTheme = function(theme, link){
 
 function createSdMenu() {
     var newMenu = new gui.Menu();
+    SmartDashboard.newMenu = newMenu;
     var typesList = [];
     for (var widgetType in SmartDashboard.widgetTypes) {
         if (!SmartDashboard.widgetTypes.hasOwnProperty(widgetType)) continue;
@@ -166,12 +167,12 @@ SmartDashboard.showAbout = function(){
         SmartDashboard.aboutWindow.focus();
         return;
     }
-    var c = SmartDashboard.createWindowCoordinates(800, 600);
+    var c = SmartDashboard.createWindowCoordinates(600, 500);
     gui.Window.open('about.html', {
         frame: false,
         resizable: false,
-        width: 800,
-        height: 600,
+        width: 600,
+        height: 500,
         x: c.x,
         y: c.y
     }, function(w){
@@ -211,8 +212,13 @@ SmartDashboard.entriesTree = function(){
 SmartDashboard.init = function () {
     window.onerror = function(message, source, lineno, colno, error){
         SmartDashboard.handleError(error);
-    }
+    };
+    
     global.SmartDashboard = SmartDashboard;
+    process.on('uncaughtException', function (err) {
+        global.SmartDashboard.handleError(err);
+    });
+    
     var data = global.data;
 
     SmartDashboard.options = data.options;
@@ -336,6 +342,8 @@ SmartDashboard.init = function () {
     setInterval(checkConnection, 5000);
     setTimeout(checkConnection, 1000);
     
+    createSdMenu();
+    
     setTimeout(function(){
         if(global.initCallback) global.initCallback();
         gui.Window.get().show();
@@ -450,6 +458,11 @@ SmartDashboard.setEditable = function (flag) {
     }
     
     DomUtils.resetClass("not-editing");
+    if(flag){
+        document.querySelector("#control-editable").classList.add("toggle-down");
+    } else {
+        document.querySelector("#control-editable").classList.remove("toggle-down");
+    }
 }
 
 SmartDashboard.addWidget = function (widget) {

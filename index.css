@@ -129,7 +129,9 @@ body, html, button, input {
     margin-right: 1em;
     opacity: 0;
     pointer-events: none;
-    width: 23px;
+    height: 19px;
+    line-height: 19px;
+    font-size: 0.6em;
 }
 
 #entries .list ul {
@@ -170,6 +172,11 @@ body, html, button, input {
 #entries .list li.open>ul {
     max-height: 1500px;
     opacity: 1;
+}
+
+#controls {
+    text-align: center;
+    border-top: 1px solid black;
 }
 
 #place-screen {
@@ -563,4 +570,111 @@ input[type=checkbox].redgreen:checked {
     background-position: 50% 50%;
     width: 100%;
     height: 100%;
+}
+
+.widget-Meter .widget-input {
+    min-width: 100px;
+    height: 100%;
+    min-height: 20px;
+    overflow: hidden;
+}
+
+.widget-Dial .dial-container {
+    position: relative;
+    flex: 1;
+    min-width: 205px;
+    min-height: 205px;
+}
+
+.widget-Meter .widget-input div {
+    background: lightblue;
+    width: 0;
+    height: 100%;
+    min-height: 20px;
+}
+
+.widget-Dial .widget-input {
+    width: 200px;
+    height: 200px;
+    max-width: 200px;
+    
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin: -100px 0 0 -100px;
+    
+    border: 1px solid black;
+    border-radius: 100px;
+}
+
+.widget-Dial .widget-input .needle {
+    width: 10px;
+    height: 100px;
+    position: absolute;
+    left: calc(50% - 5px);
+    transform-origin: bottom;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 100px solid lightblue;
+    box-sizing: border-box;
+    transition: transform 0.1s;
+}
+
+.widget-Dial .widget-input .tick {
+    border-left: 1px solid black;
+    height: 20px;
+    position: absolute;
+    left: 50%;
+    top: 0px;
+    transform-origin: 0px 100px;
+}
+
+.tick.tick-45 {
+    transform: rotate(45deg);
+}
+.tick.tick-90 {
+    transform: rotate(90deg);
+}
+.tick.tick-135 {
+    transform: rotate(135deg);
+}
+.tick.tick-180 {
+    transform: rotate(180deg);
+}
+.tick.tick-225 {
+    transform: rotate(225deg);
+}
+.tick.tick-270 {
+    transform: rotate(270deg);
+}
+.tick.tick-315 {
+    transform: rotate(315deg);
+}
+
+.tick-label {
+    transform-origin: center;
+}
+.tick.tick-0 .tick-label {
+    transform: translateX(-50%) translateY(20px) rotate(0deg);
+}
+.tick.tick-45 .tick-label { 
+    transform: translateX(-50%) translateY(20px) rotate(-45deg);
+}
+.tick.tick-90 .tick-label {
+    transform: translateX(-50%) translateY(20px) rotate(-90deg);
+}
+.tick.tick-135 .tick-label {
+    transform: translateX(-50%) translateY(20px) rotate(-135deg);
+}
+.tick.tick-180 .tick-label {
+    transform: translateX(-50%) translateY(20px) rotate(-180deg);
+}
+.tick.tick-225 .tick-label {
+    transform: translateX(-50%) translateY(20px) rotate(-225deg);
+}
+.tick.tick-270 .tick-label {
+    transform: translateX(-50%) translateY(20px) rotate(-270deg);
+}
+.tick.tick-315 .tick-label {
+    transform: translateX(-50%) translateY(20px) rotate(-315deg);
 }

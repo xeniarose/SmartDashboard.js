@@ -8,6 +8,7 @@
     <script>
         document.write('<link rel="stylesheet" id="theme-css" href="' + global.FileUtils.getThemeLocation() + '"/>');
     </script>
+    <link rel="stylesheet" href="assets/font-awesome.min.css" />
     <style>
         .caption {
             margin: 0;
@@ -53,27 +54,46 @@
         
         .dialog-header {
             margin: 0;
-            padding-left: 1em;
             -webkit-app-region: drag;
+            padding-left: 0.2em;
+        }
+        
+        label span {
+            width: 50%;
+            box-sizing: border-box;
+            display: inline-block;
+            text-align: right;
+            margin-right: 1em;
+        }
+        
+        select {
+            width: 134px;
+        }
+        
+        .themes-view {
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            justify-content: space-around;
         }
     </style>
 </head>
 
 <body class="options">
     <form action="javascript:void(0)" onsubmit="save()">
-        <h2 class="dialog-header">Options</h2>
+        <h2 class="dialog-header"><i class="fa fa-cogs" aria-hidden="true"></i> Options</h2>
         <div id="container">
-            <fieldset>
-                <legend>Connection</legend>
-                <label>Remote IP: <input type="text" id="ip" placeholder="10.te.am.2" class="setting restart-required" /></label><br/>
-                <label>Remote Port: <input type="number" id="port" placeholder="1735" class="setting restart-required" /></label>
+            <fieldset id="connection">
+                <legend><i class="fa fa-wifi" aria-hidden="true"></i> Connection</legend>
+                <label><span>Remote IP:</span><input type="text" id="ip" placeholder="10.te.am.2" class="setting restart-required" /></label><br/>
+                <label><span>Remote Port:</span><input type="number" id="port" placeholder="1735" class="setting restart-required" /></label>
             </fieldset>
            
-            <fieldset>
-                <legend>DriverStation Integration</legend>
+            <fieldset id="ds-integration">
+                <legend><i class="fa fa-exchange" aria-hidden="true"></i> DriverStation Integration</legend>
                 <h3>DriverStation Mode:</h3>
-                <label>Enabled: <input type="checkbox" id="dsMode" class="setting restart-required" /></label><br/>
-                <label>Enable when launched from DriverStation <input type="checkbox" id="useDsModeSwitch" class="setting" /></label>
+                <label><span><input type="checkbox" id="dsMode" class="setting restart-required" /></span>Enabled</label><br/>
+                <label><span><input type="checkbox" id="useDsModeSwitch" class="setting" /></span>Enable when launched from DS</label>
                 <p class="caption">Removes the window border and makes the dashboard fill the entire screen above DriverStation when it's docked.</p>
                 <p class="caption" id="dsModeWarning" style="display: none;">SmartDashboard is currently launched with <code>--ds-mode</code></p>
                 <script>
@@ -95,8 +115,8 @@
                     });
                 </script>
                 <h3>Default Dashboard: <button type="button" class="open-folder" data-folder="frcdata">Open DS Folder</button></h3>
-                <label><input type="radio" name="ds-toggle" class="ds-default-toggle toggle-on" /> SmartDashboard.js</label><br/>
-                <label><input type="radio" name="ds-toggle" class="ds-default-toggle toggle-off" /> LabVIEW Dashboard</label><br/>
+                <label><span><input type="radio" name="ds-toggle" class="ds-default-toggle toggle-on" /></span>SmartDashboard.js</label><br/>
+                <label><span><input type="radio" name="ds-toggle" class="ds-default-toggle toggle-off" /></span>LabVIEW Dashboard</label><br/>
                 <p class="caption">The default dashboard is what DriverStation launches when you choose "Default" in the dashboard selector. Close DriverStation before changing.</p>
                 <script>
                     if(global.FileUtils.isDefaultDashboard()){
@@ -107,27 +127,27 @@
                 </script>
             </fieldset>
          
-            <fieldset>
-                <legend>Default Widgets</legend>
-                <label>Array: <select id="default-array" class="widget-select setting" data-filter="array"></select></label><br/>
-                <label>Boolean: <select id="default-boolean" class="widget-select setting" data-filter="boolean"></select></label><br/>
-                <label>Number: <select id="default-number" class="widget-select setting" data-filter="number"></select></label><br/>
-                <label>Object: <select id="default-object" class="widget-select setting" data-filter="object"></select></label><br/>
-                <label>Raw: <select id="default-raw" class="widget-select setting" data-filter="raw"></select></label> <span style="color:red;font-variant:small-caps;">unimplemented</span><br/>
-                <label>String: <select id="default-string" class="widget-select setting" data-filter="string"></select></label>
+            <fieldset id="default-widgets">
+                <legend><i class="fa fa-file-o" aria-hidden="true"></i> Default Widgets</legend>
+                <label><span>Array:</span><select id="default-array" class="widget-select setting" data-filter="array"></select></label><br/>
+                <label><span>Boolean:</span><select id="default-boolean" class="widget-select setting" data-filter="boolean"></select></label><br/>
+                <label><span>Number:</span><select id="default-number" class="widget-select setting" data-filter="number"></select></label><br/>
+                <label><span>Object:</span><select id="default-object" class="widget-select setting" data-filter="object"></select></label><br/>
+                <label><span>(unimplemented) Raw:</span><select id="default-raw" class="widget-select setting" data-filter="raw"></select></label><br/>
+                <label><span>String:</span><select id="default-string" class="widget-select setting" data-filter="string"></select></label>
                 <p class="caption">These are the default widget types that will be added when items are clicked in the variables list. Widgets can be changed into other types using the Morph menu.</p>
             </fieldset>
            
-            <fieldset>
-                <legend>Theme</legend>
+            <fieldset id="themes">
+                <legend><i class="fa fa-paint-brush" aria-hidden="true"></i> Theme</legend>
                 <p class="caption">Theme CSS files can be dropped into the <code>themes</code> folder. <button type="button" class="open-folder" data-folder="themes">Open Themes Folder</button></p>
                 <div class="themes-view">
                     <select id="theme" class="setting"></select>
                 </div>
             </fieldset>
          
-            <fieldset>
-                <legend>Plugins</legend>
+            <fieldset id="plugins">
+                <legend><i class="fa fa-plug" aria-hidden="true"></i> Plugins</legend>
                 <p class="caption">Plugin JS files can be dropped into the <code>plugins</code> folder. <button type="button" class="open-folder" data-folder="plugins">Open Plugins Folder</button></p>
                 <div class="plugins-view">
                     No plugins

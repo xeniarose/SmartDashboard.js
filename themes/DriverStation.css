@@ -65,7 +65,7 @@ select, button {
     transition: background 0.2s, color 0.2s;
 }
 
-select:active, button:active {
+select:active, button:active, button.toggle-down {
     color: #01D3FF;
     background: #2D2D2D;
 }
@@ -82,6 +82,10 @@ a {
 
 #entries li {
     color: #01D3FF;
+}
+
+#controls button {
+    border-top: 0;
 }
 
 .button-pane {
@@ -106,4 +110,25 @@ a {
 
 .vis-panel div {
     color: white !important;
+}
+
+
+.widget-Meter .widget-input .needle {
+    background: #01D3FF;
+}
+
+.widget-Dial .widget-input {
+    background: #2A2A2A;
+}
+
+.widget-Dial .widget-input .needle {
+    border-bottom-color: #01D3FF;
+}
+
+.widget-Dial .widget-input {
+    border-color: white;
+}
+
+.widget-Dial .widget-input .tick {
+    border-left-color: white;
 }

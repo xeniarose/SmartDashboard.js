@@ -86,7 +86,8 @@ class DomUtils {
                 var a = document.createElement("a");
                 var btn = document.createElement("button");
                 btn.classList.add("entry-add");
-                btn.textContent = "+";
+                btn.classList.add("fa");
+                btn.classList.add("fa-plus");
                 a.href = "javascript:void(0)";
                 a.textContent = key;
                 var nameRaw = parentPath + key;
@@ -97,10 +98,12 @@ class DomUtils {
                 btn.onclick = function(){
                     if(this.parentElement.classList.contains("open")){
                         this.parentElement.classList.remove("open");
-                        this.textContent = "+";
+                        this.classList.remove("fa-minus");
+                        this.classList.add("fa-plus");
                     } else {
                         this.parentElement.classList.add("open");
-                        this.textContent = "-";
+                        this.classList.remove("fa-plus");
+                        this.classList.add("fa-minus");
                     }
                 };
                 a.onclick = function(){
@@ -173,11 +176,11 @@ class DomUtils {
             var widget = null;
             var el = ev.target;
             do {
-            if (el.parentWidget) {
-                widget = el.parentWidget;
-                break;
-            }
-            el = el.parentElement;
+                if (el.parentWidget) {
+                    widget = el.parentWidget;
+                    break;
+                }
+                el = el.parentElement;
             } while (el != null);
             if (widget != null && widget.editable) {
                 menu = widget._createContextMenu();
@@ -230,6 +233,36 @@ class DomUtils {
         document.querySelector("#error-screen button.close").onclick = function(){
             document.querySelector("#error-screen").classList.remove("active");
         };
+        
+        document.querySelector("#control-about").onclick = function(){
+            SmartDashboard.showAbout();
+        };
+        
+        document.querySelector("#control-options").onclick = function(){
+            SmartDashboard.showOptions();
+        };
+        
+        document.querySelector("#control-exit").onclick = function(){
+            SmartDashboard.onExit();
+        };
+        document.querySelector("#control-exit").oncontextmenu = function(e){
+            ContextMenu.create("exit").popup(e.target.offsetLeft, e.target.offsetTop + e.target.offsetHeight);
+            e.preventDefault();
+            return false;
+        }
+        
+        document.querySelector("#control-editable").onclick = function(){
+            SmartDashboard.setEditable(!SmartDashboard.editable);
+        };
+        
+        document.querySelector("#control-new").onclick = function(e){
+            SmartDashboard.newMenu.popup(e.target.offsetLeft, e.target.offsetTop + e.target.offsetHeight);
+        };
+        document.querySelector("#control-new").oncontextmenu = function(e){
+            this.onclick(e);
+            e.preventDefault();
+            return false;
+        }
     }
     
     static getCssRules(styleContent) {

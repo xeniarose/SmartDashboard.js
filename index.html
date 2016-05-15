@@ -8,6 +8,7 @@
     <script src="assets/vis.js"></script>
     <link rel="stylesheet" href="assets/vis.css" />
     
+    <link rel="stylesheet" href="assets/font-awesome.min.css" />
     <link rel="stylesheet" href="index.css" />
     <link rel="stylesheet" id="theme-css" />
 </head>
@@ -25,6 +26,23 @@
         <ul class="list">
         </ul>
         <datalist id="entry-search-items"></datalist>
+        <div id="controls">
+            <button class="control" id="control-about" title="About">
+                <i class="fa fa-info-circle" aria-hidden="true"></i>
+            </button>
+            <button class="control" id="control-options" title="Options">
+                <i class="fa fa-cogs" aria-hidden="true"></i>
+            </button>
+            <button class="control" id="control-exit" title="Exit">
+                <i class="fa fa-power-off" aria-hidden="true"></i>
+            </button>
+            <button class="control" id="control-editable" title="Editable Mode">
+                <i class="fa fa-pencil-square-o" aria-hidden="true"></i>
+            </button>
+            <button class="control" id="control-new" title="New Widget">
+                <i class="fa fa-plus-circle" aria-hidden="true"></i>
+            </button>
+        </div>
     </div>
     <div id="place-screen">
         <h1>Click anywhere to place</h1>
@@ -33,7 +51,7 @@
         <div class="dialog">
             <h3 class="input-title"></h3>
             <div class="input-content">
-                <input type="text" class="input-content-input" placeholder="Enter input here" />
+                <input type="text" class="input-content-input" />
             </div>
             <div class="button-pane">
                 <button class="button-yes" type="button">OK</button>
@@ -43,7 +61,7 @@
     </div>
     <div id="error-screen" class="dialog-screen">
         <div class="dialog">
-            <h3>SmartDashboard.js encountered an error</h3>
+            <h3><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> SmartDashboard.js encountered an error</h3>
             <pre class="error-details-pre"><code class="error-details"></code></pre>
             <div class="button-pane">
                 <a class="report-error" href="javascript:void(0)">Report this error</a>

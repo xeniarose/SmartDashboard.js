@@ -220,13 +220,14 @@ class Slider extends Widget {
     }
 
     createPropertiesView(win){
+        var self = this;
         var cb = function (k, v) {
             self.saveData[k] = v;
             self.root.querySelector(".widget-input")[k] = v;
             self.update();
         };
-        for (var item of self.getEditableProperties()) {
-            win.addField(item, "number", self.root.querySelector(".widget-input")[item], cb);
+        for (var item of this.getEditableProperties()) {
+            win.addField(item, "number", this.root.querySelector(".widget-input")[item], cb);
         }
     }
 
@@ -244,34 +245,116 @@ class Slider extends Widget {
 
 SmartDashboard.registerWidget(Slider, "number");
 
-class Meter extends Slider {
-    createMainElement(){
-        var el = document.createElement("progress");
-        el.max = 1;
-        el.style.alignSelf = "center";
-        return el;
-    }
-    
-    change(evt) {
+class Meter extends Widget {
+    render() {
+        var el = document.createElement("div");
+        el.classList.add("widget-input");
+        el.id = this._dom_id;
+        var inner = document.createElement("div");
+        el.appendChild(inner);
+        
+        if(!this.saveData.hasOwnProperty("min")){
+            this.saveData.min = 0;
+        }
+        if(!this.saveData.hasOwnProperty("max")){
+            this.saveData.max = 100;
+        }
+        
+        this.root.appendChild(el);
+        this._valLabel = document.createElement("label");
+        this._valLabel.style.width = this._valLabel.style.minWidth = "4em";
+        this.root.appendChild(this._valLabel);
     }
     
     update() {
         this._valLabel.textContent = this.val;
-        var inp = this.root.querySelector(".widget-input");
-        inp.onchange = null;
-        if(!inp.minimum) inp.minimum = "0";
-        if(!inp.maximum) inp.maximum = "100";
-        var min = parseFloat(inp.minimum);
-        var max = parseFloat(inp.maximum);
-        inp.value = (this.val - min) / (max - min);
+        var meter = this.root.querySelector(".widget-input");
+        
+        var min = parseFloat(this.saveData.min);
+        var max = parseFloat(this.saveData.max);
+        var percent = 100 * (this.val - min) / (max - min);
+        this.root.querySelector(".widget-input div").style.width = percent + "%";
     }
     
-    getEditableProperties(){
-        return ["minimum", "maximum"];
+    createPropertiesView(win){
+        var self = this;
+        var cb = function (k, v) {
+            self.saveData[k] = v;
+            self.update();
+        };
+        for (var item of ["min", "max"]) {
+            win.addField(item, "number", this.saveData[item], cb);
+        }
     }
 }
 
 SmartDashboard.registerWidget(Meter, "number");
+
+class Dial extends Widget {
+    render() {
+        var container = document.createElement("div");
+        container.id = this._dom_id;
+        container.classList.add("dial-container");
+        
+        var el = document.createElement("div");
+        el.classList.add("widget-input");
+        
+        for(var i = 0; i < 360; i += 45){
+            var tick = document.createElement("div");
+            tick.classList.add("tick");
+            tick.classList.add("tick-" + i);
+            
+            var label = document.createElement("div");
+            label.classList.add("tick-label");
+            tick.appendChild(label);
+            el.appendChild(tick);
+        }
+        
+        var inner = document.createElement("div");
+        inner.classList.add("needle");
+        el.appendChild(inner);
+        container.appendChild(el);
+        
+        if(!this.saveData.hasOwnProperty("min")){
+            this.saveData.min = 0;
+        }
+        if(!this.saveData.hasOwnProperty("max")){
+            this.saveData.max = 100;
+        }
+        
+        this.root.appendChild(container);
+        this.updateLabels();
+    }
+    
+    updateLabels() {
+        var min = parseFloat(this.saveData.min);
+        var max = parseFloat(this.saveData.max);
+        for(var i = 0; i < 360; i += 45){
+            var label = this.root.querySelector(".tick-" + i + " .tick-label");
+            label.textContent = min + (i / 360) * (max - min);
+        }
+    }
+    
+    update() {
+        var min = parseFloat(this.saveData.min);
+        var max = parseFloat(this.saveData.max);
+        var degrees = 360 * (this.val - min) / (max - min);
+        this.root.querySelector(".widget-input .needle").style.transform = "rotate(" + degrees + "deg)";
+    }
+    
+    createPropertiesView(win){
+        var self = this;
+        var cb = function (k, v) {
+            self.saveData[k] = v;
+            self.update();
+            self.updateLabels();
+        };
+        for (var item of ["min", "max"]) {
+            win.addField(item, "number", this.saveData[item], cb);
+        }
+    }
+}
+SmartDashboard.registerWidget(Dial, "number");
 
 class StringBox extends Widget {
     render() {
