@@ -1,5 +1,5 @@
-id ICON "favicon.ico"
-41 ICON "favicon.ico"
+id ICON "..\\assets\\favicon.ico"
+41 ICON "..\\assets\\favicon.ico"
 42 BITMAP "splash.bmp"
 1 VERSIONINFO
 FILEVERSION     1,0,0,0

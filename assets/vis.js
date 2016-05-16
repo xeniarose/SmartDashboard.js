@@ -26770,6 +26770,9 @@ return /******/ (function(modules) { // webpackBootstrap
   };
 
   DataAxis.prototype.screenToValue = function (x) {
+      // MODIFICATION (bugfix)
+      if(this.scale == null) return 0;
+      // END MODIFICATION
     return this.scale.screenToValue(x);
   };
 

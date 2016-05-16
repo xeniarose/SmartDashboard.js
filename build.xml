@@ -2,7 +2,8 @@
     <taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
     
     <property name="nw.version" value="v0.14.1" />
-    <property name="nw.versionstring" value="nwjs-${nw.version}-win-x64" />
+    <property name="sd.os" value="win-x64" />
+    <property name="nw.versionstring" value="nwjs-${nw.version}-${sd.os}" />
     
     <target name="sd.clean">
         <delete>
@@ -62,7 +63,7 @@
         <echo message="SmartDashboard.js version: ${sd.version}" />
     </target>
     
-    <target name="sd.compile-launcher" depends="sd.clean">
+    <target name="sd.compile-launcher">
         <exec executable="windres" dir="launcher">
             <arg value="Launcher.rc" />
             <arg value="-O" />
@@ -84,8 +85,8 @@
     </target>
     
     <target name="dist" depends="sd.package,sd.compile-launcher,sd.get-version">
-        <zip destfile="dist/SmartDashboard.js.${sd.version}.zip">
-            <fileset dir="dist" includes="app/*,SmartDashboard.exe" />
+        <zip destfile="dist/SmartDashboard.js.${sd.version}.${sd.os}.zip">
+            <fileset dir="dist" includes="app/**/*,SmartDashboard.exe" />
         </zip>
     </target>
 </project>

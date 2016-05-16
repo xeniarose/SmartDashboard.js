@@ -19,12 +19,13 @@ SmartDashboard.handleError = function(e, notSerious) {
     
     if(!notSerious){
         document.querySelector("#error-screen .error-details").textContent = msg;
-        document.querySelector("#error-screen").classList.add("active");
         
         document.querySelector("#error-screen .report-error").onclick = function(){
             gui.Shell.openExternal("https://github.com/erikuhlmann/SmartDashboard.js/issues/new?body="
                                    + encodeURIComponent("```\n" + msg + "\n```"));
         };
+        
+        DomUtils.openBlurredDialog("#error-screen");
     }
 }
 
@@ -47,13 +48,14 @@ SmartDashboard.prompt = function(msg, arg1, arg2, hideInputBox){
     
     document.querySelector("#input-screen button.button-yes").onclick = function(){
         document.querySelector("#input-screen").classList.remove("active");
+        document.querySelector(".dialog-bg").classList.remove("active");
         cb(document.querySelector("#input-screen input").value);
     };
     document.querySelector("#input-screen button.button-no").onclick = function(){
         document.querySelector("#input-screen").classList.remove("active");
+        document.querySelector(".dialog-bg").classList.remove("active");
         cb(null);
     };
-    document.querySelector("#input-screen").classList.add("active");
     document.querySelector("#input-screen input").focus();
     document.querySelector("#input-screen input").onkeydown = function(e){
         if(e.which == 13){
@@ -62,6 +64,7 @@ SmartDashboard.prompt = function(msg, arg1, arg2, hideInputBox){
             document.querySelector("#input-screen button.button-no").onclick();
         }
     };
+    DomUtils.openBlurredDialog("#input-screen");
 }
 
 SmartDashboard.confirm = function(msg, cb){
@@ -343,6 +346,10 @@ SmartDashboard.init = function () {
     setTimeout(checkConnection, 1000);
     
     createSdMenu();
+    
+    if(!data.options["disableVfx"]){
+        document.body.classList.add("vfx-allowed");
+    }
     
     setTimeout(function(){
         if(global.initCallback) global.initCallback();

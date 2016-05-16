@@ -232,6 +232,7 @@ class DomUtils {
         
         document.querySelector("#error-screen button.close").onclick = function(){
             document.querySelector("#error-screen").classList.remove("active");
+            document.querySelector(".dialog-bg").classList.remove("active");
         };
         
         document.querySelector("#control-about").onclick = function(){
@@ -272,6 +273,16 @@ class DomUtils {
         doc.body.appendChild(styleElement);
         return styleElement.sheet.cssRules;
     };
+    
+    static openBlurredDialog(id){
+        nw.Window.get().capturePage(function(res){
+            var bg = document.querySelector(".dialog-bg");
+            if(!bg.classList.contains("active"))
+                bg.style.background = "url(" + res + ")";
+            bg.classList.add("active");
+            document.querySelector(id).classList.add("active");
+        });
+    }
 }
 
 global.DomUtils = DomUtils;

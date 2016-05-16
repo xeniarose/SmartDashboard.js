@@ -139,11 +139,15 @@
             </fieldset>
            
             <fieldset id="themes">
-                <legend><i class="fa fa-paint-brush" aria-hidden="true"></i> Theme</legend>
+                <legend><i class="fa fa-paint-brush" aria-hidden="true"></i> Visual</legend>
+                <h3>Theme</h3>
                 <p class="caption">Theme CSS files can be dropped into the <code>themes</code> folder. <button type="button" class="open-folder" data-folder="themes">Open Themes Folder</button></p>
                 <div class="themes-view">
                     <select id="theme" class="setting"></select>
                 </div>
+                <h3>Visual Effects</h3>
+                <label><span><input type="checkbox" id="disableVfx" class="setting restart-required" /></span>Disable visual effects</label>
+                <p class="caption">Disable all animations, blurs, and other computationally expensive eyecandy. Use if SmartDashboard.js is slow. This may make the interface hard to use.</p>
             </fieldset>
          
             <fieldset id="plugins">
@@ -160,6 +164,10 @@
         </div>
     </form>
     <script>
+        if(!global.SmartDashboard.options["disableVfx"]){
+            document.body.classList.add("vfx-allowed");
+        }
+        
         var restartRequired = false;
         [].forEach.call(document.querySelectorAll(".widget-select"), function(el){
             global.DomUtils.renderWidgetSelect(el);
