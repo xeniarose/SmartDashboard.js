@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>SmartDashboard.js - Properties</title>
+    <link rel="stylesheet" href="index.css" />
+    <script>
+        document.write('<link rel="stylesheet" id="theme-css" href="' + global.FileUtils.getThemeLocation() + '"/>');
+    </script>
+    <link rel="stylesheet" href="assets/font-awesome.min.css" />
+    <style>
+        form {
+            height: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-items {
+            flex: 1 1 auto;
+            overflow-y: auto;
+            min-height: 0px;
+            padding: 1em;
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+        
+        .form-table {
+            width: 100%;
+            height: 100%;
+            display: table;
+        }
+        
+        .button-pane {
+            border-top: 1px solid black;
+            width: 100%;
+            text-align: right;
+            -webkit-app-region: drag;
+        }
+        
+        .button-pane button {
+            -webkit-app-region: no-drag;
+        }
+        
+        .form-items label {
+            display: table-row;
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+        
+        .form-items label span {
+            text-align: right;
+            vertical-align: top;
+            display: table-cell;
+            padding-right: 0.2em;
+            white-space: nowrap;
+        }
+        
+        .form-items .input-container {
+            display: table-cell;
+            border-collapse: collapse;
+            border-spacing: 0;
+            width: 100%;
+        }
+        
+        input, textarea {
+            box-sizing: border-box;
+            width: 100%;
+            resize: vertical;
+        }
+        
+        .dialog-header {
+            margin: 0;
+            padding-left: 0.2em;
+            -webkit-app-region: drag;
+        }
+    </style>
+</head>
+
+<body class="properties">
+    <form action="javascript:void(0)">
+        <h3 class="dialog-header"><i class="fa fa-sliders" aria-hidden="true"></i> Robot Preferences Editor</h3>
+        <div class="form-items">
+            <div class="form-table">
+                
+            </div>
+        </div>
+        
+        <div class="align-bottom text-right button-pane">
+            <button type="button" id="close">Close</button>
+        </div>
+    </form>
+    <script>
+        var gui = require("nw.gui");
+        
+        document.querySelector("#close").onclick = function(){
+            window.close();
+        }
+        
+        function update(key, value){
+            global.SmartDashboard.setPreference(key, value);
+        }
+        
+        function addPreference(name, type, def){
+            var label = document.createElement("label");
+            var text = document.createElement("span");
+            text.textContent = name + ": ";
+            label.appendChild(text);
+            var inp = document.createElement("input");
+            var cont = document.createElement("div");
+            cont.classList.add("input-container");
+            if(type == "textarea"){
+                inp = document.createElement("textarea");
+            }
+            cont.appendChild(inp);
+            inp.setAttribute("type", type);
+            if(type == "checkbox"){
+                inp.checked = def;
+            } else {
+                inp.setAttribute("value", def);
+            }
+            inp.onchange = (function(name){
+                return function(e){
+                    var val = (type == "checkbox") ? e.target.checked : e.target.value;
+                    update(name, val);
+                };
+            })(name);
+            label.appendChild(cont);
+            
+            document.querySelector(".form-table").appendChild(label);
+        }
+        
+        global.SmartDashboard.getPreferenceKeys().forEach(function(key){
+            var rawType = global.WidgetUtils.getTypeForEntry("Preferences/" + key);
+            var type = "text";
+            if(rawType == "number"){
+                type = "number";
+            } else if(rawType == "boolean"){
+                type = "checkbox";
+            }
+            addPreference(key, type, global.SmartDashboard.getPreference(key));
+        });
+    </script>
+</body>
+</html>

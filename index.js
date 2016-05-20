@@ -165,6 +165,28 @@ SmartDashboard.showOptions = function () {
     });
 }
 
+SmartDashboard.showRobotPrefs = function () {
+    if(SmartDashboard.prefsWindow){
+        SmartDashboard.prefsWindow.focus();
+        return;
+    }
+    var c = SmartDashboard.createWindowCoordinates(350, 400);
+    gui.Window.open('preference-editor.html', {
+        frame: false,
+        width: 350,
+        height: 400,
+        x: c.x,
+        y: c.y
+    }, function(w){
+        global.SmartDashboard.prefsWindow = w;
+        var win = w.window;
+        w.on("close", function(){
+            delete global.SmartDashboard.prefsWindow;
+            w.close(true);
+        });
+    });
+}
+
 SmartDashboard.showAbout = function(){
     if(SmartDashboard.aboutWindow){
         SmartDashboard.aboutWindow.focus();
@@ -210,6 +232,30 @@ SmartDashboard.entriesTree = function(){
     }
     
     return root;
+}
+
+SmartDashboard.getPreferenceKeys = function(){
+    var entries = ntcore.getAllEntries();
+    entries = entries.map(function(item){
+        if(item.startsWith("/")){
+            item = item.substring(1);
+        }
+        return item;
+    }).filter(function(item){
+        return item.startsWith("Preferences");
+    }).map(function(item){
+        return item.substring("Preferences/".length);
+    });
+    entries.sort();
+    return entries;
+};
+
+SmartDashboard.getPreference = function(key){
+    return ntcore.getTable("Preferences").get(key);
+}
+
+SmartDashboard.setPreference = function(key, val){
+    ntcore.getTable("Preferences").put(key, val);
 }
 
 SmartDashboard.init = function () {
