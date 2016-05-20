@@ -115,6 +115,17 @@ class DomUtils {
                 };
                 el.appendChild(btn);
                 el.appendChild(a);
+                
+                if(pathBuild == "" && key == "Preferences"){
+                    var edit = document.createElement("button");
+                    edit.textContent = "Edit";
+                    edit.classList.add("prefs-edit-btn");
+                    edit.onclick = function(){
+                        SmartDashboard.showRobotPrefs();
+                    };
+                    el.appendChild(edit);
+                }
+                
                 domRoot.appendChild(el);
                 var ul = document.createElement("ul");
                 el.appendChild(ul);

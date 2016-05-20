@@ -711,3 +711,8 @@ body.vfx-allowed .widget-Dial .widget-input .needle {
 .tick.tick-315 .tick-label {
     transform: translateX(-50%) translateY(20px) rotate(-315deg);
 }
+
+.prefs-edit-btn {
+    margin-left: 0.5em;
+    font-size: 0.7em;
+}
