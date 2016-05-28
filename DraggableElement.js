@@ -96,9 +96,13 @@ class DraggableElement {
                 });
                 if(self.parent) self.parent.getPropertiesFromParent(win, self);
                 
-                self.createPropertiesView(win);
+                self._createPropertiesView(win);
             });
         });
+    }
+    
+    _createPropertiesView(win){
+        this.createPropertiesView(win);
     }
     
     onInserted(){

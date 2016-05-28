@@ -182,6 +182,14 @@ class Widget extends DraggableElement {
         return menu;
     }
     
+    _createPropertiesView(win){
+        var self = this;
+        win.addField("Override Robot", "checkbox", self.saveData.clientOverride || false, function(k, v){
+            self.saveData.clientOverride = v;
+        });
+        this.createPropertiesView(win);
+    }
+    
     createPropertiesView(win){
         
     }
@@ -199,7 +207,12 @@ class Widget extends DraggableElement {
         // get around the ntcore addon losing context on callbacks
         var self = this;
         this._mainListener = function (k, v) {
-            self._update(k, v);
+            if(self.saveData.clientOverride){
+                // prevent robot connect from overwriting values
+                self.table.put(k, self.val);
+            } else {
+                self._update(k, v);
+            }
         };
         this.table.onChange(this.key, this._mainListener);
     }

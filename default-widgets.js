@@ -493,7 +493,12 @@ class Chooser extends Widget {
             if (k == "options") {
                 self.val = v;
             } else if (k == "selected") {
-                self.valSelected = v;
+                if(self.saveData.clientOverride && self.valSelected != ""){
+                    self._valTable.put("selected", self.valSelected);
+                    return;
+                } else {
+                    self.valSelected = v;
+                }
             }
             self.update();
         };
@@ -507,6 +512,7 @@ class Chooser extends Widget {
 
     change(evt) {
         this.table.put(this.key + "/selected", evt.target.value);
+        this.valSelected = evt.target.value;
     }
 
     update() {

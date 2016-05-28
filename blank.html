@@ -88,7 +88,6 @@
         </div>
         
         <div class="align-bottom text-right button-pane">
-            <button type="button">Update</button>
             <button type="button" onclick="window.close()">Close</button>
         </div>
     </form>
@@ -112,10 +111,13 @@
             }
             cont.appendChild(inp);
             inp.setAttribute("type", type);
-            inp.setAttribute("value", def);
+            if(type == "checkbox")
+                inp.checked = def;
+            else
+                inp.setAttribute("value", def);
             inp.onchange = (function(name, cb){
                 return function(e){
-                    cb(name, e.target.value);
+                    cb(name, e.target.type == "checkbox" ? e.target.checked : e.target.value);
                 };
             })(name, callback);
             label.appendChild(cont);
