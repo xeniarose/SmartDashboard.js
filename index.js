@@ -29,7 +29,7 @@ SmartDashboard.handleError = function(e, notSerious) {
     }
 }
 
-SmartDashboard.prompt = function(msg, arg1, arg2, hideInputBox){
+SmartDashboard.prompt = function(msg, arg1, arg2, hideInputBox, items){
     SmartDashboard.window.focus();
     var initialVal = null;
     var cb = function(){}
@@ -37,6 +37,18 @@ SmartDashboard.prompt = function(msg, arg1, arg2, hideInputBox){
     if(typeof arg2 == "string") initialVal = arg2;
     if(typeof arg1 == "function") cb = arg1;
     if(typeof arg2 == "function") cb = arg2;
+    
+    var datalist = document.getElementById("input-content-input-items");
+    datalist.innerHTML = "";
+    if(items){
+        items.sort();
+        for(var i = 0; i < items.length; i++){
+            var opt = document.createElement("option");
+            opt.value = items[i];
+            opt.textContent = items[i];
+            datalist.appendChild(opt);
+        }
+    }
     
     document.querySelector("#input-screen h3").textContent = msg;
     document.querySelector("#input-screen input").value = initialVal ? initialVal : "";

@@ -60,7 +60,7 @@ void SmartDashboardInit(){
     if (CreateProcess(nwLocationChar, cmdLineChar, NULL, NULL, TRUE, 0, NULL, NULL, &info, &processInfo)) {
         while(!sdIsUp){
             EnumWindows(enumWindowsProc, 0);
-            Sleep(10);
+            Sleep(200);
         }
         mySplash.Hide();
         

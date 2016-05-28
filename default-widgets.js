@@ -356,7 +356,7 @@ class Dial extends Widget {
 }
 SmartDashboard.registerWidget(Dial, "number");
 
-class StringBox extends Widget {
+class StringInput extends Widget {
     render() {
         var el = document.createElement("input");
         el.type = "text";
@@ -379,7 +379,7 @@ class StringBox extends Widget {
     }
 }
 
-SmartDashboard.registerWidget(StringBox, "string");
+SmartDashboard.registerWidget(StringInput, "string");
 
 class Checkbox extends Widget {
     render() {
@@ -528,7 +528,7 @@ class Chooser extends Widget {
 }
 SmartDashboard.registerWidget(Chooser, "object", {objectDetect: ["options", "selected"]});
 
-class TextBox extends Widget {
+class MultilineInput extends Widget {
     render() {
         var el = document.createElement("textarea");
         el.classList.add("widget-input");
@@ -550,7 +550,7 @@ class TextBox extends Widget {
     }
 }
 
-SmartDashboard.registerWidget(TextBox, "string");
+SmartDashboard.registerWidget(MultilineInput, "string");
 
 class Command extends Widget {
     render() {

@@ -156,8 +156,31 @@ class DomUtils {
             if(nameRaw.trim() == "") return;
             this.blur();
             this.value = "";
-            var widgetType = WidgetUtils.getTypeForEntry(nameRaw);
-            WidgetUtils.defaultNewWidget(widgetType, nameRaw);
+            
+            var isVariable = false, entries = ntcore.getAllEntries();
+            for(var entry of entries){
+                if(entry == nameRaw || entry == "/" + nameRaw){
+                    isVariable = true;
+                    break;
+                }
+            }
+            
+            var allTypes = ["number", "string", "boolean", "array", "object", "raw"];
+            
+            if(isVariable){
+                var widgetType = WidgetUtils.getTypeForEntry(nameRaw);
+                WidgetUtils.defaultNewWidget(widgetType, nameRaw);
+            } else {
+                SmartDashboard.prompt("Data type for new variable:", "", function(val){
+                    if(val){
+                        val = val.toLowerCase();
+                        if(allTypes.indexOf(val) < 0){
+                            val = "object";
+                        }
+                        WidgetUtils.defaultNewWidget(val, nameRaw);
+                    }
+                }, false, allTypes);
+            }
         };
         document.querySelector("#entry-search").onblur = function(){
             this.value = "";
