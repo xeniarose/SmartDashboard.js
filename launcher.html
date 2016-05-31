@@ -23,7 +23,6 @@
             text-align: center;
             padding: 0;
             margin: 0;
-            -webkit-app-region: drag;
         }
         
         h1 {
@@ -46,6 +45,7 @@
         
         try {
             var dataStr = fs.readFileSync(FileUtils.getDataLocations().save);
+            
             data = JSON.parse(dataStr);
             if(data.options.dsMode){
                 frame = false;
@@ -71,7 +71,10 @@
             var contents = fs.readFileSync("themes/DriverStation.css");
             fs.writeFileSync(themes + "/DriverStation.css", contents);
         } catch(e){
-            alert("Error: Failed to create data files");
+            if(!confirm("SmartDashboard.js error: Failed to create data files\n" + e.stack + "\n\nContinue?")){
+                gui.App.closeAllWindows();
+                gui.Window.get().close(true);
+            }
         }
         
         var dataPath = gui.App.dataPath;
@@ -90,9 +93,15 @@
         
         global.data = data;
         
-        if(gui.App.argv.indexOf("--ds-mode") > -1 && data.options.useDsModeSwitch){
-            frame = false;
-            data.options.dsMode = true;
+        for(var arg of gui.App.argv){
+            if(arg.startsWith("--layout=")){
+                data.options.profile = arg.substring("--layout=".length);
+            }
+            
+            if(arg == "--ds-mode" && data.options.useDsModeSwitch){
+                frame = false;
+                data.options.dsMode = true;
+            }
         }
         
         global.initCallback = function(){

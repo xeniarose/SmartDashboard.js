@@ -17,6 +17,7 @@
     <div id="dashboard">
         
     </div>
+    <span class="widget-update">Click out or ENTER to update</span>
     <div id="entries">
         <div class="connection-status"> to Robot</div>
         <div class="profile-container">
@@ -60,7 +61,9 @@
             </div>
         </div>
     </div>
-    <div class="dialog-bg"></div>
+    <div class="dialog-bg">
+        <div class="dialog-bg-inner"></div>
+    </div>
     <div id="error-screen" class="dialog-screen">
         <div class="dialog">
             <h3><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> SmartDashboard.js encountered an error</h3>
@@ -73,6 +76,7 @@
     </div>
     
     <script>
+        const path = require("path");
         const gui = require('nw.gui');
         const ntcore = require("./ntcore_node");
         const fs = require('fs');

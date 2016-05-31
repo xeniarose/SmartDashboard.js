@@ -21,7 +21,7 @@ SmartDashboard.handleError = function(e, notSerious) {
         document.querySelector("#error-screen .error-details").textContent = msg;
         
         document.querySelector("#error-screen .report-error").onclick = function(){
-            gui.Shell.openExternal("https://github.com/erikuhlmann/SmartDashboard.js/issues/new?body="
+            gui.Shell.openExternal(gui.App.manifest.repositories[0].url + "/issues/new?body="
                                    + encodeURIComponent("```\n" + msg + "\n```"));
         };
         

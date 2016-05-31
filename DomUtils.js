@@ -310,12 +310,36 @@ class DomUtils {
     
     static openBlurredDialog(id){
         nw.Window.get().capturePage(function(res){
-            var bg = document.querySelector(".dialog-bg");
-            if(!bg.classList.contains("active"))
+            var bg = document.querySelector(".dialog-bg-inner");
+            if(!bg.parentElement.classList.contains("active"))
                 bg.style.background = "url(" + res + ")";
-            bg.classList.add("active");
+            bg.parentElement.classList.add("active");
             document.querySelector(id).classList.add("active");
         });
+    }
+    
+    static showUpdateButton(elem){
+        var updateButton = document.querySelector(".widget-update");
+        var elemBB = elem.getBoundingClientRect();
+        var scrollTop = document.body.scrollTop;
+        var scrollLeft = document.body.scrollLeft;
+        var bodyHeight = document.body.offsetHeight;
+        
+        updateButton.top = "-1000px";
+        updateButton.left = "-1000px";
+        
+        var left = elemBB.left + elemBB.width - updateButton.offsetWidth;
+        var top = elemBB.top + elemBB.height;
+        if(top + updateButton.offsetHeight > bodyHeight){
+            top = elemBB.top - updateButton.offsetHeight;
+        }
+        updateButton.style.top = top + "px";
+        updateButton.style.left = left + "px";
+        updateButton.classList.add("active");
+    }
+    
+    static hideUpdateButton(){
+        document.querySelector(".widget-update").classList.remove("active");
     }
 }
 

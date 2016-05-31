@@ -240,6 +240,16 @@ class Widget extends DraggableElement {
         this.root.appendChild(label);
         
         this.render();
+        
+        var inputs = this.root.querySelectorAll("input:not([type=button]):not([type=submit]),textarea");
+        for(var i = 0; i < inputs.length; i++){
+            inputs[i].addEventListener("focus", function(e){
+                DomUtils.showUpdateButton(e.target);
+            });
+            inputs[i].addEventListener("blur", function(){
+                DomUtils.hideUpdateButton();
+            });
+        }
     }
 
     render() {

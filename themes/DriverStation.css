@@ -1,4 +1,6 @@
-body, .container {
+/* Automatically copied, do not edit */
+
+body, .container, .dialog-bg {
     background: #2A2A2A;
     color: white;
 }
@@ -11,7 +13,7 @@ body, .container {
     background: #464646;
 }
 
-.container.drop-target {
+.container.drop-target, .container.drop-target[data-editing=true]:not(.not-editing), .container.drop-target[data-editing=true] {
     background: #2A2F2A;
 }
 
@@ -131,4 +133,8 @@ a {
 
 .widget-Dial .widget-input .tick {
     border-left-color: white;
+}
+
+.widget-update {
+    text-shadow: 0px 0px 5px black, 0px 0px 1px black;
 }

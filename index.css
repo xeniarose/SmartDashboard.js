@@ -278,7 +278,7 @@ body.vfx-allowed .removed-element {
     background: darkgray;
 }
 
-.container.drop-target {
+.container.drop-target, .container.drop-target[data-editing=true]:not(.not-editing), .container.drop-target[data-editing=true] {
     border: 1px solid green;
     background: rgb(200, 255, 200);
 }
@@ -510,19 +510,26 @@ body.vfx-allowed .dialog-screen {
     width: 100%;
     height: 100%;
     z-index: 99999;
+    background: white;
+}
+
+.dialog-bg-inner {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
 }
 
 body.vfx-allowed .dialog-bg {
-    -webkit-filter: blur(0px);
     transition: opacity 0.3s;
+}
+
+body.vfx-allowed .dialog-bg-inner {
+    -webkit-filter: blur(10px);
 }
 
 .dialog-bg.active {
     opacity: 1;
-}
-
-body.vfx-allowed .dialog-bg.active {
-    -webkit-filter: blur(10px);
 }
 
 .dialog-screen.active {
@@ -715,4 +722,24 @@ body.vfx-allowed .widget-Dial .widget-input .needle {
 .prefs-edit-btn {
     margin-left: 0.5em;
     font-size: 0.7em;
+}
+
+.widget-update {
+    display: block;
+    position: absolute;
+    font-size: 0.7em;
+    opacity: 0;
+    pointer-events: none;
+    text-shadow: 0px 0px 5px white, 0px 0px 1px white;
+    top: -1000px;
+    left: -1000px;
+}
+
+body.vfx-allowed .widget-update {
+    transition: opacity 0.2s, background 0.5s, box-shadow 0.5s;
+}
+
+.widget-update.active {
+    opacity: 1;
+    pointer-events: all;
 }

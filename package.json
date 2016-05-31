@@ -1,18 +1,24 @@
 {
-  "main": "launcher.html",
-  "name": "SmartDashboard.js",
-  "description": "Unofficial FRC SmartDashboard in nw.js",
-  "version": "0.1.5",
-  "keywords": ["frc", "smartdashboard"],
-  "window": {
-    "title": "SmartDashboard.js",
-    "icon": "assets/favicon.png",
-    "frame": false,
-    "width": 300,
-    "height": 40,
-    "position": "center",
-    "transparent": false,
-    "show": false
-  },
-  "js-flags": "--expose-gc"
+    "main": "launcher.html",
+    "name": "SmartDashboard.js",
+    "description": "Unofficial FRC SmartDashboard in nw.js",
+    "version": "0.1.6",
+    "keywords": ["frc", "smartdashboard"],
+    "repositories": [
+        {
+            "type": "git", 
+            "url": "https://github.com/erikuhlmann/SmartDashboard.js"
+        }
+    ],
+    "window": {
+        "title": "SmartDashboard.js",
+        "icon": "assets/favicon.png",
+        "frame": false,
+        "width": 300,
+        "height": 40,
+        "position": "center",
+        "transparent": false,
+        "show": false
+    },
+    "js-flags": "--expose-gc"
 }
