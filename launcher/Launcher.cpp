@@ -51,6 +51,12 @@ BOOL CALLBACK enumWindowsProc(HWND hWnd, LPARAM lParam){
 }
 
 void SmartDashboardInit(){
+    if(strstr(GetCommandLine(), "--ds-mode") != NULL){
+        
+    }
+    
+    
+    
     STARTUPINFO info={sizeof(info)};
     PROCESS_INFORMATION processInfo;
     

@@ -11,6 +11,7 @@
             font-weight: 400;
             src: url('fonts/SourceSansPro-Regular.ttf') format('truetype');
         }
+        
         @font-face {
             font-family: 'Source Sans Pro';
             font-style: normal;
@@ -18,7 +19,9 @@
             src: url('fonts/SourceSansPro-Bold.ttf') format('truetype');
         }
         
-        body, html, progress {
+        body,
+        html,
+        progress {
             width: 100%;
             text-align: center;
             padding: 0;
@@ -34,49 +37,50 @@
     <script>
         const fs = require('fs');
         const gui = require("nw.gui");
+        const path = require('path');
         
         var frame = true;
-        
+
         var data = {
             sdver: gui.App.manifest.version,
             widgets: [],
             options: {}
         };
-        
+
         try {
             var dataStr = fs.readFileSync(FileUtils.getDataLocations().save);
-            
+
             data = JSON.parse(dataStr);
-            if(data.options.dsMode){
+            if (data.options.dsMode) {
                 frame = false;
             }
         } catch (e) {
             console.log(e);
         }
-        
+
         try {
             var layouts = FileUtils.getDataLocations().layouts;
-            if (!fs.existsSync(layouts)){
+            if (!fs.existsSync(layouts)) {
                 fs.mkdirSync(layouts);
             }
             var plugins = FileUtils.getDataLocations().plugins;
-            if (!fs.existsSync(plugins)){
+            if (!fs.existsSync(plugins)) {
                 fs.mkdirSync(plugins);
             }
             var themes = FileUtils.getDataLocations().themes;
-            if (!fs.existsSync(themes)){
+            if (!fs.existsSync(themes)) {
                 fs.mkdirSync(themes);
             }
-            
+
             var contents = fs.readFileSync("themes/DriverStation.css");
             fs.writeFileSync(themes + "/DriverStation.css", contents);
-        } catch(e){
-            if(!confirm("SmartDashboard.js error: Failed to create data files\n" + e.stack + "\n\nContinue?")){
+        } catch (e) {
+            if (!confirm("SmartDashboard.js error: Failed to create data files\n" + e.stack + "\n\nContinue?")) {
                 gui.App.closeAllWindows();
                 gui.Window.get().close(true);
             }
         }
-        
+
         var dataPath = gui.App.dataPath;
         document.write('<link rel="stylesheet" id="theme-css" href="file:///' + dataPath + "/themes/" + (data.options.theme || "DriverStation") + '.css"/>');
     </script>
@@ -86,30 +90,30 @@
     <h1>SmartDashboard.js</h1>
     <script>
         gui.Window.get().show();
-        
-        if(typeof data.options.useDsModeSwitch == "undefined"){
+
+        if (typeof data.options.useDsModeSwitch == "undefined") {
             data.options.useDsModeSwitch = true;
         }
-        
+
         global.data = data;
-        
-        for(var arg of gui.App.argv){
-            if(arg.startsWith("--layout=")){
+
+        for (var arg of gui.App.argv) {
+            if (arg.startsWith("--layout=")) {
                 data.options.profile = arg.substring("--layout=".length);
             }
-            
-            if(arg == "--ds-mode" && data.options.useDsModeSwitch){
+
+            if (arg == "--ds-mode" && data.options.useDsModeSwitch) {
                 frame = false;
                 data.options.dsMode = true;
             }
         }
-        
-        global.initCallback = function(){
+
+        global.initCallback = function () {
             gui.Window.get().close();
         };
-        
+
         console.info("Launching");
-        setTimeout(function(){
+        setTimeout(function () {
             gui.Window.open("index.html", {
                 "title": "SmartDashboard",
                 "icon": "assets/favicon.png",
@@ -118,8 +122,8 @@
                 "transparent": false,
                 "show": false,
                 "id": "SmartDashboard_main"
-            }, function(win){
-                setTimeout(function(){
+            }, function (win) {
+                setTimeout(function () {
                     win.show();
                     gui.Window.get().close();
                 }, 5000);
@@ -127,4 +131,5 @@
         }, 500); // give some time for splash to show up before the thread freezes
     </script>
 </body>
+
 </html>

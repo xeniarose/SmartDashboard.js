@@ -6,6 +6,7 @@
     <property name="nw.versionstring" value="nwjs-${nw.version}-${sd.os}" />
     
     <target name="sd.clean">
+        <mkdir dir="dist" />
         <delete>
             <fileset dir="dist">
                 <include name="*.zip"/>
@@ -36,7 +37,7 @@
             <fileset dir="${nw.versionstring}"/>
         </copy>
         <zip destfile="dist/app/SmartDashboard.nw">
-            <fileset dir="." includes="assets/*,fonts/*,themes/*,*.html,*.js,*.css,*.json" />
+            <fileset dir="." includes="assets/*,fonts/*,themes/*,*.html,*.js,*.css,*.json,node_modules/**/*" />
             <fileset dir=".">
                 <include name="ntcore_node.node" />
                 <include name="LICENSE" />

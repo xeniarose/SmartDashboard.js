@@ -417,6 +417,8 @@ SmartDashboard.init = function () {
     setTimeout(function(){
         if(global.initCallback) global.initCallback();
         gui.Window.get().show();
+        
+        SmartDashboard.checkUpdate();
     }, 500); // wait for things to load a bit
 }
 
@@ -555,6 +557,173 @@ SmartDashboard.removeWidget = function (widget) {
         this.widgets.splice(index, 1);
     }
 }
+
+SmartDashboard.isProduction = function(){
+    return process.execPath.indexOf("app\\nw.exe") > -1;
+}
+
+function isVersionGreater(v1, v2){
+    v1 = v1.split(".").map(item => parseInt(item));
+    v2 = v2.split(".").map(item => parseInt(item));
+    
+    for(var i = 0; i < Math.min(v1.length, v2.length); i++){
+        if(v1[i] > v2[i]){
+            return true;
+        }
+    }
+    return false;
+}
+
+SmartDashboard.checkUpdate = function () {
+    var currentVersion = gui.App.manifest.version;
+    var repoUrl = gui.App.manifest.repositories[0].url, parts = repoUrl.split("/");
+    var owner = parts[parts.length - 2], repo = parts[parts.length - 1];
+    if (SmartDashboard.isProduction()) {
+        fetch(new Request("https://api.github.com/repos/" + owner + "/" + repo + "/releases/latest", {
+            headers: new Headers({
+                "Accept": "application/vnd.github.v3+json"
+            }),
+            method: "GET",
+            cache: "no-cache"
+        })).then(function (response) {
+            if(response.status != 200) {
+                console.log("Update check", response.status, response.statusText);
+                return;
+            }
+            
+            response.text().then(function(text){
+                var release = JSON.parse(text);
+                console.log("Update check", release);
+                
+                if(release.draft || release.prerelease || !isVersionGreater(release.tag_name, currentVersion)
+                   || release.assets.length < 1 || release.assets[0].state != "uploaded"){
+                    return;
+                }
+                
+                var url = release.assets[0].browser_download_url;
+                SmartDashboard.confirm("Update " + release.tag_name + " is available. Update now?", function(res){
+                    if(res) {
+                        document.querySelector("#update-screen h3 .status").textContent = "Downloading update";
+                        DomUtils.openBlurredDialog("#update-screen");
+                        SmartDashboard.saveUpdate(release.tag_name, url, function(percent){
+                            document.querySelector("#update-screen progress").value = percent;
+                        }, function(err){
+                            if(err){
+                                SmartDashboard.handleError(err);
+                                return;
+                            }
+                            
+                            document.querySelector("#update-screen h3 .status").textContent = "Extracting files";
+                            SmartDashboard.saveUpdater();
+                            SmartDashboard.saveData();
+                            var dp = gui.App.getDataPath();
+                            var child = child_process.spawn("cmd.exe", ["/c", "start", "Updating SmartDashboard.js", dp + "\\sdupdate.bat"], {detached: true, cwd: dp});
+                            child.unref();
+                            gui.App.quit();
+                        });
+                    }
+                });
+            });
+        }).catch(function (err) {
+            console.error(err);
+        });
+    }
+}
+
+SmartDashboard.saveUpdate = function(version, url, progress, cb){
+    console.info("Saving update", version);
+    console.log(url);
+    
+    global._update_cb = cb;
+    global._update_progress = progress;
+    
+    var file;
+    try {
+        file = fs.createWriteStream(gui.App.getDataPath() + "\\update.zip.dl");
+    } catch(e){
+        cb(e);
+        return;
+    }
+    
+    function httpResponse(response){
+        if(response.headers['location']){
+            console.log("Following redirect", response.headers['location']);
+            httpRequest(response.headers['location']);
+            return;
+        }
+        console.log("Downloading update");
+        
+        var total = parseInt(response.headers["content-length"]), current = 0;
+        response.pipe(file);
+        response.on('data', function(data){
+            current += data.length;
+            if(global._update_progress){
+                global._update_progress(current * 100 / total);
+            }
+        });
+        file.on('finish', function() {
+            console.log("Finished");
+            file.close(function(){
+                fs.writeFileSync(gui.App.getDataPath() + "\\update.sd", process.execPath.replace("app\\nw.exe", ""));
+                if(global._update_cb){
+                    global._update_cb(null);
+                }
+            });
+        });
+    }
+    
+    function httpRequest(url){
+        request = https.get(url, httpResponse).on('error', function(err) {
+            console.error(err);
+            fs.unlink(dest);
+            if(global._update_cb) {
+                global._update_cb(err);
+            }
+        });
+    }
+    
+    httpRequest(url);
+}
+
+SmartDashboard.saveUpdater = function(){
+    // a prime example of a language in a language in a language
+    // vbscript in batch in javascript
+    fs.writeFileSync(gui.App.getDataPath() + "\\sdupdate.bat", `
+@echo off
+setlocal
+cd /d %~dp0
+
+set /p target=<update.sd
+if not exist update.zip.dl goto :startsd
+
+taskkill /f /im nw.exe
+del "update.zip"
+rename "update.zip.dl" "update.zip"
+cls
+echo Updating SmartDashboard.js...
+sleep 5
+rd /s/q "%target%"
+Call :UnZipFile "%target%" "update.zip"
+
+:startsd
+start "" "%target%SmartDashboard.exe"
+exit
+
+:UnZipFile <ExtractTo> <newzipfile>
+set vbs="sdupdate.vbs"
+if exist %vbs% del /f /q %vbs%
+>%vbs%  echo Set fso = CreateObject("Scripting.FileSystemObject")
+>>%vbs% echo If NOT fso.FolderExists(%1) Then
+>>%vbs% echo fso.CreateFolder(%1)
+>>%vbs% echo End If
+>>%vbs% echo set objShell = CreateObject("Shell.Application")
+>>%vbs% echo set FilesInZip=objShell.NameSpace(fso.GetAbsolutePathName(%2)).items
+>>%vbs% echo objShell.NameSpace(%1).CopyHere FilesInZip, 4+16+1024
+>>%vbs% echo Set fso = Nothing
+>>%vbs% echo Set objShell = Nothing
+cscript //nologo %vbs%
+rem if exist %vbs% del /f /q %vbs%`);
+};
 
 function uniqueId() {
     return Math.floor(Math.random() * 0x10000000000000).toString(16);

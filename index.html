@@ -64,6 +64,12 @@
     <div class="dialog-bg">
         <div class="dialog-bg-inner"></div>
     </div>
+    <div id="update-screen" class="dialog-screen">
+        <div class="dialog">
+            <h3><i class="fa fa-download" aria-hidden="true"></i> <span class="status">Downloading update</span></h3>
+            <progress max="100"></progress>
+        </div>
+    </div>
     <div id="error-screen" class="dialog-screen">
         <div class="dialog">
             <h3><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> SmartDashboard.js encountered an error</h3>
@@ -81,6 +87,7 @@
         const ntcore = require("./ntcore_node");
         const fs = require('fs');
         const child_process = require('child_process');
+        const https = require('https');
         gui.Screen.Init();
     </script>
     <script src="ContextMenu.js"></script>

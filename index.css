@@ -754,3 +754,12 @@ body.vfx-allowed .widget-update {
     opacity: 1;
     pointer-events: all;
 }
+
+#update-screen progress {
+    width: 100%;
+}
+
+#update-screen .dialog {
+    overflow: hidden;
+    min-width: 50%;
+}
