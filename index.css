@@ -417,9 +417,20 @@ input[type=checkbox].redgreen:checked {
 
 .container-FlowContainer>.widget, .container-FlowContainer>.container {
     position: relative;
-    display: inline-block;
     top: 0px !important;
     left: 0px !important;
+}
+
+.container-FlowContainer>.widget {
+    display: inline-flex;
+}
+
+.container-FlowContainer>.container {
+    display: inline-block;
+}
+
+.container-FlowContainer>.container-FlexContainer {
+    display: inline-flex;
 }
 
 .container-Container .container {

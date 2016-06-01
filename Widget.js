@@ -46,6 +46,12 @@ class Widget extends DraggableElement {
             type: "separator"
         }));
         menu.append(new gui.MenuItem({
+            label: "Reset Size",
+            click: function () {
+                self.resetSize();
+            }
+        }));
+        menu.append(new gui.MenuItem({
             label: "Delete",
             click: function () {
                 self.remove();
@@ -155,7 +161,7 @@ class Widget extends DraggableElement {
                 click: this.changeOrder.bind(this, "forward")
             },
             {
-                label: "Backwaord",
+                label: "Backward",
                 click: this.changeOrder.bind(this, "backward")
             },
             {

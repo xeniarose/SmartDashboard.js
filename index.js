@@ -342,6 +342,7 @@ SmartDashboard.init = function () {
     } catch (e) {
         SmartDashboard.handleError(e);
     }
+    
 
     console.info("Loading save, save.version=", data.sdver, "sd.version=", SmartDashboard.version);
     if (data.sdver != SmartDashboard.version) {
@@ -409,6 +410,10 @@ SmartDashboard.init = function () {
         document.body.classList.add("vfx-allowed");
     }
     
+    setInterval(function(){
+        SmartDashboard.saveData();
+    }, 1000 * 60 * 5);
+    
     setTimeout(function(){
         if(global.initCallback) global.initCallback();
         gui.Window.get().show();
@@ -457,49 +462,51 @@ SmartDashboard.loadWidgets = function(){
     }
 }
 
-SmartDashboard.saveData = function () {
-    var data = {
-        sdver: SmartDashboard.version
-    }
-    
-    var widgets = [];
-    
-    var topLevelWidgets = Array.prototype.map.call(document.querySelector("#dashboard").children, function(el){
-        return el.parentWidget;
-    });
-    
-    function saveWidget(widget, data) {
-        var wPos = widget.getPosition();
-        var wData = {
-            x: wPos.x,
-            y: wPos.y,
-            w: wPos.w,
-            h: wPos.h,
-            type: widget.constructor.name,
-            table: widget.table.getTablePath(),
-            key: widget.key,
-            data: widget.saveData || {}
-        };
-        data.push(wData);
-        if(widget.getChildren){
-            wData.children = [];
-            for(var childWidget of widget.getChildren()){
-                saveWidget(childWidget, wData.children);
-            }
-        }
-    };
-    
-    for(var widget of topLevelWidgets){
-        saveWidget(widget, widgets);
-    }
-    
-    data.options = SmartDashboard.options;
-    data = JSON.stringify(data);
+SmartDashboard.saveData = function() {
+    console.log("Saving data");
     try {
+        var data = {
+            sdver: SmartDashboard.version
+        }
+
+        var widgets = [];
+
+        var topLevelWidgets = Array.prototype.map.call(document.querySelector("#dashboard").children, function (el) {
+            return el.parentWidget;
+        });
+
+        function saveWidget(widget, data) {
+            var wPos = widget.getPosition();
+            var wData = {
+                x: wPos.x,
+                y: wPos.y,
+                w: wPos.w,
+                h: wPos.h,
+                type: widget.constructor.name,
+                table: widget.table.getTablePath(),
+                key: widget.key,
+                data: widget.saveData || {}
+            };
+            data.push(wData);
+            if (widget.getChildren) {
+                wData.children = [];
+                for (var childWidget of widget.getChildren()) {
+                    saveWidget(childWidget, wData.children);
+                }
+            }
+        };
+
+        for (var widget of topLevelWidgets) {
+            saveWidget(widget, widgets);
+        }
+
+        data.options = SmartDashboard.options;
+        data = JSON.stringify(data);
+
         fs.writeFileSync(FileUtils.getDataLocations().save, data);
-        
+
         fs.writeFileSync(FileUtils.getDataLocations().layouts + SmartDashboard.options.profile + ".json", JSON.stringify(widgets));
-    } catch(e){
+    } catch (e) {
         SmartDashboard.handleError(e);
     }
 }
