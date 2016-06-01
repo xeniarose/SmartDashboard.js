@@ -241,7 +241,7 @@ class Widget extends DraggableElement {
         
         this.render();
         
-        var inputs = this.root.querySelectorAll("input:not([type=button]):not([type=submit]),textarea");
+        var inputs = this.root.querySelectorAll("input[type=text],input[type=number],textarea");
         for(var i = 0; i < inputs.length; i++){
             inputs[i].addEventListener("focus", function(e){
                 DomUtils.showUpdateButton(e.target);

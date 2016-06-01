@@ -32,7 +32,7 @@
     
     <target name="sd.package" depends="sd.clean,nw.download">
         <mkdir dir="dist/app" />
-        <copy todir="dist/app">
+        <copy todir="dist/app" verbose="true">
             <fileset dir="${nw.versionstring}"/>
         </copy>
         <zip destfile="dist/app/SmartDashboard.nw">
@@ -64,7 +64,7 @@
     </target>
     
     <target name="sd.compile-launcher">
-        <exec executable="windres" dir="launcher">
+        <exec executable="windres" dir="launcher" failonerror="true">
             <arg value="Launcher.rc" />
             <arg value="-O" />
             <arg value="coff" />
@@ -72,13 +72,14 @@
             <arg value="Launcher.res" />
         </exec>
         
-        <exec executable="g++" dir="launcher">
+        <exec executable="g++" dir="launcher" failonerror="true">
             <arg value="SPLASH.cpp" />
             <arg value="Launcher.cpp" />
             <arg value="Launcher.res" />
             <arg value="-o" />
             <arg value="..\dist\SmartDashboard.exe" />
             <arg value="-mwindows" />
+            <arg value="-lpsapi" />
             <arg value="-static-libgcc" />
             <arg value="-static-libstdc++" />
         </exec>

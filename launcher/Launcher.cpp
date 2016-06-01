@@ -5,7 +5,8 @@
 #include <string>
 #include "SPLASH.h"
 #include <direct.h>
-
+#include <psapi.h>
+#include <stdio.h>
 
 static BOOL sdIsUp = false;
 static SPLASH mySplash;
@@ -24,6 +25,25 @@ BOOL CALLBACK enumWindowsProc(HWND hWnd, LPARAM lParam){
     TCHAR toFind[] = _T("SmartDashboard.js");
     
     if (_tcscmp(buffer, toFind) == 0 && IsWindowVisible(hWnd)){
+        /*DWORD pid;
+        GetWindowThreadProcessId(hWnd, &pid);
+        HANDLE Handle = OpenProcess(
+            PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
+            FALSE,
+            pid
+        );
+        if (Handle) {
+            TCHAR Buffer[MAX_PATH];
+            if (GetModuleFileNameEx(Handle, 0, Buffer, MAX_PATH)) {
+                TCHAR nwName[] = _T("nw.exe");
+                if(_tcsstr(Buffer, nwName) != 0) {
+                    sdIsUp = true;
+                }
+            } else {
+            }
+            CloseHandle(Handle);
+        } else {
+        }*/
         sdIsUp = true;
     }
 
