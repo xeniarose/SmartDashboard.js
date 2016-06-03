@@ -1,7 +1,9 @@
 #include <windows.h>
 #include <tchar.h>
 #include <stdlib.h>
-#include <unistd.h>
+#ifndef _MSC_VER
+    #include <unistd.h>
+#endif
 #include <string>
 #include "SPLASH.h"
 #include <direct.h>
@@ -18,7 +20,7 @@ BOOL CALLBACK enumWindowsProc(HWND hWnd, LPARAM lParam){
         return TRUE;
     }
     
-    TCHAR buffer[length + 1];
+    TCHAR* buffer = (TCHAR*) malloc(sizeof(TCHAR) * (length + 1));
     memset( buffer, 0, ( length + 1 ) * sizeof( TCHAR ) );
     
     GetWindowText( hWnd, buffer, length + 1 );
@@ -111,7 +113,7 @@ void SmartDashboardInit(){
 }
 
 int main(){
-    mySplash.Init();
+    mySplash.Init(strstr(GetCommandLine(), "--pb") != NULL);
     HANDLE sdInit = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) &SmartDashboardInit, NULL, 0, NULL);
     
     MSG msg = {0};
@@ -120,3 +122,14 @@ int main(){
         DispatchMessage(&msg);
     }
 }
+
+#ifdef _MSC_VER
+int CALLBACK WinMain(
+  _In_ HINSTANCE hInstance,
+  _In_ HINSTANCE hPrevInstance,
+  _In_ LPSTR     lpCmdLine,
+  _In_ int       nCmdShow
+){
+    return main();
+}
+#endif

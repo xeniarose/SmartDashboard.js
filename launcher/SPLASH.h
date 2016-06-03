@@ -5,7 +5,8 @@ public:
 	void Hide();
 	SPLASH();
 	virtual ~SPLASH();
-    void Init();
+    void Init(bool showProgress);
 protected:
     HWND hSplashWnd;
+    HWND hwndPB;
 };

@@ -645,7 +645,7 @@ SmartDashboard.checkUpdate = function(notifyIfNoneCb) {
                             SmartDashboard.saveUpdater();
                             SmartDashboard.saveData();
                             
-                            var child = child_process.spawn(dp + "\\SmartDashboard.exe", ["--update"], {detached: true, cwd: dp});
+                            var child = child_process.spawn(dp + "\\SmartDashboard.exe", ["--update", "--pb"], {detached: true, cwd: dp});
                             child.unref();
                             gui.App.quit();
                         });

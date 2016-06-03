@@ -2,7 +2,7 @@
   "main": "launcher.html",
   "name": "SmartDashboard.js",
   "description": "Unofficial FRC SmartDashboard in nw.js",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "keywords": [
     "frc",
     "smartdashboard"

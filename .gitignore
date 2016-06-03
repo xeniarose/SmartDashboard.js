@@ -10,5 +10,6 @@ dist/
 *.exe
 *.res
 *.o
+*.obj
 screenshots/
 node_modules/

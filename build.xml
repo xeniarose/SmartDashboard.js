@@ -1,27 +1,31 @@
 <project name="SmartDashboard.js" default="dist" basedir=".">
-    <taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
-    
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties" />
+
     <property name="nw.version" value="v0.14.1" />
     <property name="sd.os" value="win-x64" />
     <property name="nw.versionstring" value="nwjs-${nw.version}-${sd.os}" />
-    
+
+    <property name="win.sdk" value="C:\Program Files\Microsoft SDKs\Windows\v7.1" />
+    <propertyregex property="win.sdk.esc" input="${win.sdk}" regexp=" " replace="^ " global="true" />
+    <property name="win.vs" value="C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC" />
+
     <target name="sd.clean">
         <mkdir dir="dist" />
         <delete>
             <fileset dir="dist">
-                <include name="*.zip"/>
-                <include name="*.exe"/>
+                <include name="*.zip" />
+                <include name="*.exe" />
                 <include name="app/**/*" />
             </fileset>
         </delete>
     </target>
-    
+
     <target name="nw.check">
         <condition property="nw.exists">
-            <available file="${nw.versionstring}" type="dir"/>
+            <available file="${nw.versionstring}" type="dir" />
         </condition>
     </target>
-    
+
     <target name="nw.download" depends="nw.check" unless="nw.exists">
         <echo message="Downloading nwjs ${nw.version}" />
         <get dest="${nw.versionstring}.zip" verbose="true">
@@ -30,11 +34,11 @@
         <unzip src="${nw.versionstring}.zip" dest="." />
         <delete file="${nw.versionstring}.zip" />
     </target>
-    
+
     <target name="sd.package" depends="sd.clean,nw.download">
         <mkdir dir="dist/app" />
         <copy todir="dist/app" verbose="true">
-            <fileset dir="${nw.versionstring}"/>
+            <fileset dir="${nw.versionstring}" />
         </copy>
         <zip destfile="dist/app/SmartDashboard.nw">
             <fileset dir="." includes="assets/*,fonts/*,themes/*,*.html,*.js,*.css,*.json,node_modules/**/*" />
@@ -51,21 +55,20 @@
         </concat>
         <delete>
             <fileset dir="dist/app">
-                <include name="nw_.exe"/>
-                <include name="SmartDashboard.nw"/>
+                <include name="nw_.exe" />
+                <include name="SmartDashboard.nw" />
             </fileset>
         </delete>
     </target>
-    
+
     <target name="sd.get-version">
-        <loadfile property="sd.packagefile" srcfile="package.json"/>
-        <propertyregex property="sd.version" input="${sd.packagefile}"
-                       regexp="&quot;version&quot;:\s*&quot;([^,]+)&quot;," select="\1" />
+        <loadfile property="sd.packagefile" srcfile="package.json" />
+        <propertyregex property="sd.version" input="${sd.packagefile}" regexp="&quot;version&quot;:\s*&quot;([^,]+)&quot;," select="\1" />
         <echo message="SmartDashboard.js version: ${sd.version}" />
     </target>
-    
+
     <target name="sd.compile-launcher">
-        <exec executable="windres" dir="launcher" failonerror="true">
+        <!--<exec executable="windres" dir="launcher" failonerror="true">
             <arg value="Launcher.rc" />
             <arg value="-O" />
             <arg value="coff" />
@@ -83,9 +86,37 @@
             <arg value="-lpsapi" />
             <arg value="-static-libgcc" />
             <arg value="-static-libstdc++" />
+        </exec>-->
+
+        <exec executable="${win.sdk}\Bin\rc.exe" dir="launcher" failonerror="true">
+            <arg value="Launcher.rc" />
         </exec>
+
+        <exec executable="${win.vs}\bin\cl.exe" dir="launcher" failonerror="true">
+            <arg value="/EHsc" />
+            <arg value="Launcher.cpp" />
+            <arg value="SPLASH.cpp" />
+            <arg value="/link" />
+            <arg value="/out:..\dist\SmartDashboard.exe" />
+            <arg value="/subsystem:windows" />
+            <arg value="user32.lib" />
+            <arg value="shell32.lib" />
+            <arg value="comctl32.lib" />
+            <arg value="Launcher.res" />
+        </exec>
+        
+        <exec executable="${win.sdk}\Bin\mt.exe" dir="dist" failonerror="true">
+            <arg value="-manifest" />
+            <arg value="SmartDashboard.exe.manifest" />
+            <arg value="-outputresource:SmartDashboard.exe;1" />
+        </exec>
+        <delete>
+            <fileset dir="dist">
+                <include name="SmartDashboard.exe.manifest" />
+            </fileset>
+        </delete>
     </target>
-    
+
     <target name="dist" depends="sd.package,sd.compile-launcher,sd.get-version">
         <zip destfile="dist/SmartDashboard.js.${sd.version}.${sd.os}.zip">
             <fileset dir="dist" includes="app/**/*,SmartDashboard.exe" />
