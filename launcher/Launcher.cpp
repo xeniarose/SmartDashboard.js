@@ -7,6 +7,7 @@
 #include <direct.h>
 #include <psapi.h>
 #include <stdio.h>
+#include <shellapi.h>
 
 static BOOL sdIsUp = false;
 static SPLASH mySplash;
@@ -51,11 +52,23 @@ BOOL CALLBACK enumWindowsProc(HWND hWnd, LPARAM lParam){
 }
 
 void SmartDashboardInit(){
-    if(strstr(GetCommandLine(), "--ds-mode") != NULL){
+    if(strstr(GetCommandLine(), "--update") != NULL) {        
+        SHELLEXECUTEINFO ShExecInfo = {0};
+        ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
+        ShExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
+        ShExecInfo.hwnd = NULL;
+        ShExecInfo.lpVerb = "open";
+        ShExecInfo.lpFile = "sdupdate.bat";        
+        ShExecInfo.lpParameters = "";   
+        ShExecInfo.lpDirectory = NULL;
+        ShExecInfo.nShow = SW_HIDE;
+        ShExecInfo.hInstApp = NULL; 
+        ShellExecuteEx(&ShExecInfo);
+        WaitForSingleObject(ShExecInfo.hProcess, INFINITE);
         
+        exit(0);
     }
-    
-    
+
     
     STARTUPINFO info={sizeof(info)};
     PROCESS_INFORMATION processInfo;

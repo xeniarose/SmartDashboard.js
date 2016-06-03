@@ -29,7 +29,7 @@ SmartDashboard.handleError = function(e, notSerious) {
     }
 }
 
-SmartDashboard.prompt = function(msg, arg1, arg2, hideInputBox, items){
+SmartDashboard.prompt = function(msg, arg1, arg2, hideInputBox, items, details){
     SmartDashboard.window.focus();
     var initialVal = null;
     var cb = function(){}
@@ -51,6 +51,7 @@ SmartDashboard.prompt = function(msg, arg1, arg2, hideInputBox, items){
     }
     
     document.querySelector("#input-screen h3").textContent = msg;
+    document.querySelector("#input-screen .input-details").textContent = details || "";
     document.querySelector("#input-screen input").value = initialVal ? initialVal : "";
     if(hideInputBox){
         document.querySelector("#input-screen input").style.display = "none";
@@ -289,7 +290,7 @@ SmartDashboard.init = function () {
         data.options.port = ntcore.DEFAULT_PORT;
     }
     if (!data.options.ip) {
-        data.options.ip = "127.0.0.1";
+        data.options.ip = "";
     }
     
     if(!data.options.theme){
@@ -298,6 +299,10 @@ SmartDashboard.init = function () {
     
     if(!data.options.profile){
         data.options.profile = "default";
+    }
+    
+    if(typeof data.options.doUpdateCheck == "undefined"){
+        data.options.doUpdateCheck = true;
     }
     
     SmartDashboard.setTheme(SmartDashboard.options.theme);
@@ -418,7 +423,13 @@ SmartDashboard.init = function () {
         if(global.initCallback) global.initCallback();
         gui.Window.get().show();
         
-        SmartDashboard.checkUpdate();
+        if(data.options.ip == ""){
+            SmartDashboard.showOptions();
+        }
+        
+        if(data.options.doUpdateCheck){
+            SmartDashboard.checkUpdate();
+        }
     }, 500); // wait for things to load a bit
 }
 
@@ -574,7 +585,7 @@ function isVersionGreater(v1, v2){
     return false;
 }
 
-SmartDashboard.checkUpdate = function () {
+SmartDashboard.checkUpdate = function(notifyIfNoneCb) {
     var currentVersion = gui.App.manifest.version;
     var repoUrl = gui.App.manifest.repositories[0].url, parts = repoUrl.split("/");
     var owner = parts[parts.length - 2], repo = parts[parts.length - 1];
@@ -597,32 +608,49 @@ SmartDashboard.checkUpdate = function () {
                 
                 if(release.draft || release.prerelease || !isVersionGreater(release.tag_name, currentVersion)
                    || release.assets.length < 1 || release.assets[0].state != "uploaded"){
+                    if(notifyIfNoneCb){
+                        notifyIfNoneCb();
+                    }
                     return;
                 }
                 
                 var url = release.assets[0].browser_download_url;
-                SmartDashboard.confirm("Update " + release.tag_name + " is available. Update now?", function(res){
-                    if(res) {
+                SmartDashboard.prompt("Update " + release.tag_name + " is available. Update now?", function(res){
+                    if(res != null) {
                         document.querySelector("#update-screen h3 .status").textContent = "Downloading update";
                         DomUtils.openBlurredDialog("#update-screen");
-                        SmartDashboard.saveUpdate(release.tag_name, url, function(percent){
+                        SmartDashboard.saveUpdate(release.tag_name, url, function(percent, current, total){
                             document.querySelector("#update-screen progress").value = percent;
+                            document.querySelector("#update-screen .dl-info").textContent = 
+                                url + "\n" +
+                                (current / 1000000).toFixed(1) + " MB / " +
+                                (total / 1000000).toFixed(1) + " MB";
                         }, function(err){
                             if(err){
                                 SmartDashboard.handleError(err);
                                 return;
                             }
                             
+                            
+                            var dp = gui.App.getDataPath();
+                            try {
+                                var launcher = fs.readFileSync(process.execPath.replace("app\\nw.exe", "SmartDashboard.exe"));
+                                fs.writeFileSync(dp + "\\SmartDashboard.exe", launcher);
+                            } catch(e){
+                                SmartDashboard.handleError(e);
+                                return;
+                            }
+                            
                             document.querySelector("#update-screen h3 .status").textContent = "Extracting files";
                             SmartDashboard.saveUpdater();
                             SmartDashboard.saveData();
-                            var dp = gui.App.getDataPath();
-                            var child = child_process.spawn("cmd.exe", ["/c", "start", "Updating SmartDashboard.js", dp + "\\sdupdate.bat"], {detached: true, cwd: dp});
+                            
+                            var child = child_process.spawn(dp + "\\SmartDashboard.exe", ["--update"], {detached: true, cwd: dp});
                             child.unref();
                             gui.App.quit();
                         });
                     }
-                });
+                }, null, true, [], release.body);
             });
         }).catch(function (err) {
             console.error(err);
@@ -658,7 +686,7 @@ SmartDashboard.saveUpdate = function(version, url, progress, cb){
         response.on('data', function(data){
             current += data.length;
             if(global._update_progress){
-                global._update_progress(current * 100 / total);
+                global._update_progress(current * 100 / total, current, total);
             }
         });
         file.on('finish', function() {
@@ -702,7 +730,7 @@ rename "update.zip.dl" "update.zip"
 cls
 echo Updating SmartDashboard.js...
 sleep 5
-rd /s/q "%target%"
+rem rd /s/q "%target%"
 Call :UnZipFile "%target%" "update.zip"
 
 :startsd

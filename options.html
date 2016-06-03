@@ -52,6 +52,10 @@
             float: right;
         }
         
+        #updateCheckNow {
+            font-size: 12px;
+        }
+        
         .dialog-header {
             margin: 0;
             -webkit-app-region: drag;
@@ -85,7 +89,7 @@
         <div id="container">
             <fieldset id="connection">
                 <legend><i class="fa fa-wifi" aria-hidden="true"></i> Connection</legend>
-                <label><span>Remote IP:</span><input type="text" id="ip" placeholder="10.te.am.2" class="setting restart-required" /></label><br/>
+                <label><span>Remote Host:</span><input type="text" id="ip" placeholder="roborio-[team]-frc.local" class="setting restart-required" autofocus /></label><br/>
                 <label><span>Remote Port:</span><input type="number" id="port" placeholder="1735" class="setting restart-required" /></label>
             </fieldset>
            
@@ -148,6 +152,13 @@
                 <h3>Visual Effects</h3>
                 <label><span><input type="checkbox" id="disableVfx" class="setting restart-required" /></span>Disable visual effects</label>
                 <p class="caption">Disable all animations, blurs, and other computationally expensive eyecandy. Use if SmartDashboard.js is slow. This may make the interface hard to use.</p>
+            </fieldset>
+            
+            <fieldset id="update">
+                <legend><i class="fa fa-download" aria-hidden="true"></i> Updates</legend>
+                <label><span><input type="checkbox" id="doUpdateCheck" class="setting" /></span>Check for updates on start</label><br/>
+                <button id="updateCheckNow">Check for updates now</button>
+                <p class="caption" id="updateMsg"></p>
             </fieldset>
          
             <fieldset id="plugins">
@@ -224,6 +235,17 @@
             }
             window.close();
         }
+        
+        var updateCheck = document.querySelector("#updateCheckNow");
+        var updateCheckStatus = document.querySelector("#updateMsg");
+        updateCheck.onclick = function(){
+            updateCheck.disabled = true;
+            updateCheckStatus.textContent = "Checking...";
+            global.SmartDashboard.checkUpdate(function(){
+                updateCheck.disabled = false;
+                updateCheckStatus.textContent = "No updates";
+            });
+        };
     </script>
 </body>
 </html>

@@ -603,6 +603,12 @@ body.vfx-allowed .dialog-bg-inner {
     margin: 1em 0.5em;
 }
 
+#input-screen .input-details {
+    margin: 1em 1em;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
 .widget.widget-StaticImage {
     background-color: transparent;
 }
@@ -762,4 +768,15 @@ body.vfx-allowed .widget-update {
 #update-screen .dialog {
     overflow: hidden;
     min-width: 50%;
+}
+
+#update-screen pre {
+    margin-left: 1em;
+    margin-right: 1em;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+}
+
+#update-screen p {
+    margin: 0 1em;
 }
