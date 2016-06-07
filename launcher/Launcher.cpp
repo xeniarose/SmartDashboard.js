@@ -90,7 +90,7 @@ bool ExtractUpdate(){
     std::cout << content.c_str();
     std::cout << "\n";
     std::cout << "Running taskkill\n";
-    system("taskkill /f /im nw.exe");
+    system("taskkill /f /t /im nw.exe");
     
     std::cout << "Waiting\n";
     for (int i = 2; i <= 10; i+=2) {
@@ -232,7 +232,7 @@ void SmartDashboardInit() {
         while (!sdIsUp) {
             EnumWindows(enumWindowsProc, 0);
             Sleep(200);
-            if (WaitForSingleObject(process, 0) == WAIT_OBJECT_0) {
+            if (WaitForSingleObject(processInfo.hProcess, 0) == WAIT_OBJECT_0) {
                 // nw died
                 exit(0);
             }
