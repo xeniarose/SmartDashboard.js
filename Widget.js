@@ -193,6 +193,7 @@ class Widget extends DraggableElement {
         win.addField("Override Robot", "checkbox", self.saveData.clientOverride || false, function(k, v){
             self.saveData.clientOverride = v;
         });
+        win.addSeparator();
         this.createPropertiesView(win);
     }
     

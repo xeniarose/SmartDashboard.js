@@ -19,11 +19,20 @@ class WidgetUtils {
     static positionWidget(widget){
         var screen = document.querySelector("#place-screen");
         screen.onclick = function(e){
+            if(e.target.classList.contains("place-cancel") || e.target.parentElement.classList.contains("place-cancel")){
+                return;
+            }
             SmartDashboard.addWidget(widget);
             var pos = widget.getPosition();
-            widget.setPosition(e.clientX + document.body.scrollLeft - pos.w / 2, e.clientY + document.body.scrollTop - pos.h / 2);
+            widget.setPosition(e.clientX + document.querySelector("#dashboard").scrollLeft - pos.w / 2, e.clientY + document.querySelector("#dashboard").scrollTop - pos.h / 2);
             screen.classList.remove("active");
             widget.onInserted();
+        };
+        document.querySelector("#place-screen .place-cancel").onclick = function(e){
+            screen.classList.remove("active");
+            widget.destroy();
+            e.preventDefault();
+            return false;
         };
         screen.classList.add("active");
     }
@@ -44,18 +53,24 @@ class WidgetUtils {
         }
     }
     
-    static defaultNewWidget(widgetType, nameRaw){
-        WidgetUtils.newWidget(WidgetUtils.getDefaultWidget(widgetType).widget, nameRaw);
+    static defaultNewWidget(widgetType, nameRaw, position){
+        WidgetUtils.newWidget(WidgetUtils.getDefaultWidget(widgetType).widget, nameRaw, position);
     }
     
-    static newWidget(widgetClass, nameRaw){
+    static newWidget(widgetClass, nameRaw, position){
         try {
             var widget = new widgetClass(nameRaw.substring(0, nameRaw.lastIndexOf("/")),
                                          nameRaw.substring(nameRaw.lastIndexOf("/") + 1));
             if(widget.onNew)
                 widget.onNew();
             SmartDashboard.setEditable(true);
-            WidgetUtils.positionWidget(widget);
+            if(!position){
+                WidgetUtils.positionWidget(widget);
+            } else {
+                SmartDashboard.addWidget(widget);
+                widget.setPosition(position.left, position.top);
+                widget.onInserted();
+            }
         } catch (e) {
             SmartDashboard.handleError(e);
         }
@@ -73,6 +88,18 @@ class WidgetUtils {
         for (var widget of SmartDashboard.widgets) {
             if (widget._dragging && widget.dom[name]) {
                 widget.dom[name](e);
+            }
+        }
+        
+        if(name == "onmousemove"){
+            var x = e.clientX;
+            var y = e.clientY;
+            var trash = document.querySelector(".widget-trash");
+            var rect = trash.getBoundingClientRect();
+            if(x > rect.left && x < rect.right && y > rect.top && y < rect.bottom){
+                trash.classList.add("hover");
+            } else {
+                trash.classList.remove("hover");
             }
         }
     }

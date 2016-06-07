@@ -88,10 +88,10 @@ class DomUtils {
                 btn.classList.add("entry-add");
                 btn.classList.add("fa");
                 btn.classList.add("fa-plus");
-                a.href = "javascript:void(0)";
                 a.textContent = key;
                 var nameRaw = parentPath + key;
                 var type = WidgetUtils.getTypeForEntry(nameRaw);
+                a.href = "nt:" + nameRaw;
                 a.dataset.path = nameRaw;
                 a.dataset.type = type;
                 a.setAttribute("title", nameRaw + "\n" + type.substring(0,1).toUpperCase() + type.substring(1));
@@ -106,12 +106,56 @@ class DomUtils {
                         this.classList.add("fa-minus");
                     }
                 };
-                a.onclick = function(){
+                a.onclick = function(e){
+                    e.preventDefault();
                     var nameRaw = this.dataset.path;
                     
                     var widgetType = this.dataset.type;
                     
                     WidgetUtils.defaultNewWidget(widgetType, nameRaw);
+                };
+                a.ondragstart = function(e){
+                    e.dataTransfer.clearData();
+                    e.dataTransfer.setData("text/plain", this.dataset.path);
+                    e.dataTransfer.setData("application/sd.varname", this.dataset.path);
+                    e.dataTransfer.setData("application/sd.vartype", this.dataset.type);
+                    
+                    var widgetClass = WidgetUtils.getDefaultWidget(this.dataset.type).widget;
+                    var nameRaw = this.dataset.path;
+                    var dummyWidget = new widgetClass(nameRaw.substring(0, nameRaw.lastIndexOf("/")),
+                                                      nameRaw.substring(nameRaw.lastIndexOf("/") + 1));
+                    var dashboard = document.querySelector("#dashboard");
+                    dashboard.appendChild(dummyWidget.dom);
+                    dummyWidget.setEditable(true);
+                    function inlineStyles(el){
+                        var cs = window.getComputedStyle(el);
+                        for(var i = 0; i < cs.length; i++){
+                            el.style[cs[i]] = cs[cs[i]];
+                        }
+                        for(var i = 0; i < el.children.length; i++){
+                            inlineStyles(el.children[i]);
+                        }
+                    }
+                    inlineStyles(dummyWidget.dom);
+                    var width = dummyWidget.dom.offsetWidth + 5;
+                    var height = dummyWidget.dom.offsetHeight + 5;
+                    dummyWidget.dom.remove();
+                    
+                    delete dummyWidget.dom.dataset["label"];
+                    dummyWidget.dom.removeAttribute("class");
+                    
+                    dummyWidget.dom.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
+                    var data = '<svg xmlns="http://www.w3.org/2000/svg" width="' + width + '" height="' + height + '">' +
+                        '<foreignObject width="100%" height="100%">' +
+                        (new XMLSerializer).serializeToString(dummyWidget.dom) +
+                        '</foreignObject>' +
+                        '</svg>';
+                    
+                    var img = new Image();
+                    img.src = "data:image/svg+xml;utf8," + data;
+                    window.data = data;
+                    dummyWidget.destroy();
+                    e.dataTransfer.setDragImage(img, 0, 0);
                 };
                 el.appendChild(btn);
                 el.appendChild(a);
@@ -151,7 +195,9 @@ class DomUtils {
     
     static registerDocumentEventHandlers(){
         document.querySelector("#entries").onmouseover = DomUtils.renderVariableEntries;
-        document.querySelector("#entry-search").onchange = function(){
+        document.querySelector("#entry-search").onkeyup = function(e){
+            if(e.which != 13) return;
+            
             var nameRaw = this.value;
             if(nameRaw.trim() == "") return;
             this.blur();
@@ -159,7 +205,7 @@ class DomUtils {
             
             var isVariable = false, entries = ntcore.getAllEntries();
             for(var entry of entries){
-                if(entry == nameRaw || entry == "/" + nameRaw){
+                if(entry == nameRaw || entry == "/" + nameRaw || entry.startsWith("/" + nameRaw + "/")){
                     isVariable = true;
                     break;
                 }
@@ -223,7 +269,20 @@ class DomUtils {
             }
             menu.popup(ev.x, ev.y);
             return false;
-        }
+        };
+        
+        dashboard.ondragover = function(e){
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "copy";
+        };
+        
+        dashboard.ondrop = function(e){
+            var dt = e.dataTransfer;
+            WidgetUtils.defaultNewWidget(dt.getData("application/sd.vartype"),
+                    dt.getData("application/sd.varname"),
+                    {left: e.clientX + document.querySelector("#dashboard").scrollLeft,
+                     top: e.clientY + document.querySelector("#dashboard").scrollTop});
+        };
         
         document.onkeyup = function(e){
             if(e.ctrlKey && (e.which == "e".charCodeAt() || e.which == "E".charCodeAt())){
@@ -236,17 +295,7 @@ class DomUtils {
         document.querySelector("#open-profile").onclick = function(e){
             var menu = new gui.Menu();
             
-            var profiles = [];
-            
-            try {
-                FileUtils.forAllFilesInDirectory(FileUtils.getDataLocations().layouts, function (file) {
-                    if(!file.endsWith(".json"))
-                        return;
-                    profiles.push(file.substring(0, file.length - ".json".length));
-                });
-            } catch (e) {
-                SmartDashboard.handleError(e);
-            }
+            var profiles = FileUtils.getLayouts();
             
             var menuSpec = profiles.map(function(item){
                 return {
@@ -318,11 +367,21 @@ class DomUtils {
         });
     }
     
+    static checkHoverOnTrash(e, widgetDragging){
+        var x = e.clientX;
+        var y = e.clientY;
+        var trash = document.querySelector(".widget-trash");
+        var rect = trash.getBoundingClientRect();
+        if(widgetDragging && x > rect.left && x < rect.right && y > rect.top && y < rect.bottom){
+            widgetDragging.remove();
+        }
+    }
+    
     static showUpdateButton(elem){
         var updateButton = document.querySelector(".widget-update");
         var elemBB = elem.getBoundingClientRect();
-        var scrollTop = document.body.scrollTop;
-        var scrollLeft = document.body.scrollLeft;
+        var scrollTop = document.querySelector("#dashboard").scrollTop;
+        var scrollLeft = document.querySelector("#dashboard").scrollLeft;
         var bodyHeight = document.body.offsetHeight;
         
         updateButton.top = "-1000px";

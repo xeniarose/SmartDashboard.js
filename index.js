@@ -317,7 +317,8 @@ SmartDashboard.init = function () {
         SmartDashboard.handleError(e);
     }
     
-    document.querySelector(".current-profile").textContent = SmartDashboard.options.profile;
+    var cp = document.querySelector(".current-profile");
+    cp.textContent = cp.title = SmartDashboard.options.profile;
     DomUtils.registerDocumentEventHandlers();
 
     console.info("Loading plugins");
@@ -524,8 +525,10 @@ SmartDashboard.saveData = function() {
     }
 }
 
-SmartDashboard.switchProfile = function(newProfile){
-    SmartDashboard.saveData();
+SmartDashboard.switchProfile = function(newProfile, forceNoSave){
+    if(!forceNoSave) {
+        SmartDashboard.saveData();
+    }
     SmartDashboard.options.profile = newProfile;
     
     while(SmartDashboard.widgets.length > 0){
@@ -533,7 +536,8 @@ SmartDashboard.switchProfile = function(newProfile){
     }
     
     SmartDashboard.loadWidgets();
-    document.querySelector(".current-profile").textContent = newProfile;
+    var cp = document.querySelector(".current-profile");
+    cp.textContent = cp.title = newProfile;
 }
 
 SmartDashboard.setEditable = function (flag) {
@@ -545,8 +549,10 @@ SmartDashboard.setEditable = function (flag) {
     DomUtils.resetClass("not-editing");
     if(flag){
         document.querySelector("#control-editable").classList.add("toggle-down");
+        document.querySelector(".widget-trash").classList.add("active");
     } else {
         document.querySelector("#control-editable").classList.remove("toggle-down");
+        document.querySelector(".widget-trash").classList.remove("active");
     }
 }
 
@@ -642,7 +648,6 @@ SmartDashboard.checkUpdate = function(notifyIfNoneCb) {
                             }
                             
                             document.querySelector("#update-screen h3 .status").textContent = "Extracting files";
-                            SmartDashboard.saveUpdater();
                             SmartDashboard.saveData();
                             
                             var child = child_process.spawn(dp + "\\SmartDashboard.exe", ["--update", "--pb"], {detached: true, cwd: dp});
@@ -712,46 +717,6 @@ SmartDashboard.saveUpdate = function(version, url, progress, cb){
     
     httpRequest(url);
 }
-
-SmartDashboard.saveUpdater = function(){
-    // a prime example of a language in a language in a language
-    // vbscript in batch in javascript
-    fs.writeFileSync(gui.App.getDataPath() + "\\sdupdate.bat", `
-@echo off
-setlocal
-cd /d %~dp0
-
-set /p target=<update.sd
-if not exist update.zip.dl goto :startsd
-
-taskkill /f /im nw.exe
-del "update.zip"
-rename "update.zip.dl" "update.zip"
-cls
-echo Updating SmartDashboard.js...
-sleep 5
-rem rd /s/q "%target%"
-Call :UnZipFile "%target%" "update.zip"
-
-:startsd
-start "" "%target%SmartDashboard.exe"
-exit
-
-:UnZipFile <ExtractTo> <newzipfile>
-set vbs="sdupdate.vbs"
-if exist %vbs% del /f /q %vbs%
->%vbs%  echo Set fso = CreateObject("Scripting.FileSystemObject")
->>%vbs% echo If NOT fso.FolderExists(%1) Then
->>%vbs% echo fso.CreateFolder(%1)
->>%vbs% echo End If
->>%vbs% echo set objShell = CreateObject("Shell.Application")
->>%vbs% echo set FilesInZip=objShell.NameSpace(fso.GetAbsolutePathName(%2)).items
->>%vbs% echo objShell.NameSpace(%1).CopyHere FilesInZip, 4+16+1024
->>%vbs% echo Set fso = Nothing
->>%vbs% echo Set objShell = Nothing
-cscript //nologo %vbs%
-rem if exist %vbs% del /f /q %vbs%`);
-};
 
 function uniqueId() {
     return Math.floor(Math.random() * 0x10000000000000).toString(16);

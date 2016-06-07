@@ -6,7 +6,8 @@ public:
 	SPLASH();
 	virtual ~SPLASH();
     void Init(bool showProgress);
-protected:
+    void SetProgress(int percent);
+
     HWND hSplashWnd;
     HWND hwndPB;
 };

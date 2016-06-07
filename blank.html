@@ -57,6 +57,23 @@
             white-space: nowrap;
         }
         
+        .form-items label.colspan {
+            height: 1.5em;
+            position: relative;
+        }
+        
+        .form-items label span.colspan {
+            display: block;
+            position: absolute;
+            width: calc(100% - 2em);
+            text-align: left;
+            left: 1em;
+            right: 1em;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: bold;
+        }
+        
         .form-items .input-container {
             display: table-cell;
             border-collapse: collapse;
@@ -64,7 +81,7 @@
             width: 100%;
         }
         
-        input, textarea {
+        input, textarea, select {
             box-sizing: border-box;
             width: 100%;
             resize: vertical;
@@ -98,16 +115,54 @@
             return Math.floor(Math.random() * 0x10000000000000).toString(16);
         }
         
+        window.addSeparator = function(){
+            var ft = document.querySelector(".form-table");
+            if(ft.children.length > 0 && ft.children[ft.children.length - 1].tagName == "HR"){
+                return;
+            }
+            ft.appendChild(document.createElement("hr"));
+        };
+        
+        window.addSectionHeader = function(text){
+            var lbl = document.createElement("label");
+            var span = document.createElement("span");
+            span.textContent = span.title = text;
+            span.classList.add('colspan');
+            lbl.classList.add('colspan');
+            lbl.appendChild(span);
+            document.querySelector(".form-table").appendChild(lbl);
+        }
+        
         window.addField = function(name, type, def, callback, autocomplete){
+            var display = name;
+            if(typeof name == "object"){
+                display = name.display;
+                name = name.value;
+            }
+            
             var label = document.createElement("label");
             var text = document.createElement("span");
-            text.textContent = name + ": ";
+            text.textContent = display + ": ";
             label.appendChild(text);
             var inp = document.createElement("input");
             var cont = document.createElement("div");
             cont.classList.add("input-container");
             if(type == "textarea"){
                 inp = document.createElement("textarea");
+            }
+            if(type == "select"){
+                inp = document.createElement("select");
+                for(var item of autocomplete){
+                    var opt = document.createElement("option");
+                    if(typeof item == "string"){
+                        opt.setAttribute("value", item);
+                        opt.textContent = item;
+                    } else {
+                        opt.setAttribute("value", item.value);
+                        opt.textContent = item.display;
+                    }
+                    inp.appendChild(opt);
+                }
             }
             cont.appendChild(inp);
             inp.setAttribute("type", type);
@@ -122,7 +177,7 @@
             })(name, callback);
             label.appendChild(cont);
             
-            if(autocomplete){
+            if(autocomplete && type != "select"){
                 var dl = document.createElement("datalist");
                 dl.id = uniqueId();
                 for(var item of autocomplete){

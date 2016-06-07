@@ -86,15 +86,20 @@ class DraggableElement {
                     self._h = self.dom.offsetHeight;
                 };
                 var pos = self.getPosition();
-                win.addField("x", "number", pos.x, cb);
-                win.addField("y", "number", pos.y, cb);
-                win.addField("w", "number", pos.w, cb);
-                win.addField("h", "number", pos.h, cb);
-                win.addField("style", "textarea", self.saveData.style || "", function(k, v){
+                win.addField({ value: "x", display: "X" }, "number", pos.x, cb);
+                win.addField({ value: "y", display: "Y" }, "number", pos.y, cb);
+                win.addField({ value: "w", display: "Width" }, "number", pos.w, cb);
+                win.addField({ value: "h", display: "Height" }, "number", pos.h, cb);
+                win.addField("Style", "textarea", self.saveData.style || "", function(k, v){
                     self.saveData.style = v;
                     self._applyStyles(self.dom, v);
                 });
-                if(self.parent) self.parent.getPropertiesFromParent(win, self);
+                if(self.parent){
+                    win.addSeparator();
+                    win.addSectionHeader("Properties added by " + self.parent.constructor.name);
+                    self.parent.getPropertiesFromParent(win, self);
+                    win.addSeparator();
+                }
                 
                 self._createPropertiesView(win);
             });
@@ -102,6 +107,7 @@ class DraggableElement {
     }
     
     _createPropertiesView(win){
+        win.addSeparator();
         this.createPropertiesView(win);
     }
     
@@ -188,6 +194,11 @@ class DraggableElement {
                 }
                 
                 self.mouseUpHandler();
+                
+                if(!e.shiftKey){
+                    DomUtils.checkHoverOnTrash(e, self);
+                }
+                
                 e.preventDefault();
                 return false;
             }

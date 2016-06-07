@@ -1,6 +1,7 @@
 class ObjectDetector extends Widget {
     render(){
-        this.root.appendChild(document.createTextNode("Can't detect object type"));
+        this._status = document.createTextNode("Detecting object type...");
+        this.root.appendChild(this._status);
     }
     
     onInserted(){
@@ -17,6 +18,7 @@ class ObjectDetector extends Widget {
                 return;
             }
         }
+        this._status.textContent = "Can't detect object type";
         this.dom.classList.add("no-detect");
     }
     
@@ -119,8 +121,12 @@ class Graph extends Widget {
     }
     
     mouseUpHandler(){
-        this.graph2d.setOptions({height: '1px'});
-        this.graph2d.setOptions({height: this.graph.offsetHeight+'px'})
+        try {
+            this.graph2d.setOptions({height: '1px'});
+            this.graph2d.setOptions({height: this.graph.offsetHeight+'px'});
+        } catch(e){
+            console.error(e);
+        }
     }
 
     update() {
@@ -193,7 +199,11 @@ class Slider extends Widget {
     }
     
     getEditableProperties(){
-        return ["min", "max", "step"];
+        return [
+            { value: "min", display: "Minimum" },
+            { value: "max", display: "Maximum" },
+            { value: "step", display: "Step" }
+        ];
     }
     
     render() {
@@ -203,7 +213,7 @@ class Slider extends Widget {
         el.id = this._dom_id;
         
         for (var item of this.getEditableProperties()) {
-            el[item] = this.saveData[item];
+            el[item.value] = this.saveData[item.value];
         }
         
         this.root.appendChild(el);
@@ -227,7 +237,7 @@ class Slider extends Widget {
             self.update();
         };
         for (var item of this.getEditableProperties()) {
-            win.addField(item, "number", this.root.querySelector(".widget-input")[item], cb);
+            win.addField(item, "number", this.root.querySelector(".widget-input")[item.value], cb);
         }
     }
 
@@ -282,8 +292,8 @@ class Meter extends Widget {
             self.saveData[k] = v;
             self.update();
         };
-        for (var item of ["min", "max"]) {
-            win.addField(item, "number", this.saveData[item], cb);
+        for (var item of [{ value: "min", display: "Minimum" }, { value: "max", display: "Maximum" }]) {
+            win.addField(item, "number", this.saveData[item.value], cb);
         }
     }
 }
@@ -349,8 +359,8 @@ class Dial extends Widget {
             self.update();
             self.updateLabels();
         };
-        for (var item of ["min", "max"]) {
-            win.addField(item, "number", this.saveData[item], cb);
+        for (var item of [{ value: "min", display: "Minimum" }, { value: "max", display: "Maximum" }]) {
+            win.addField(item, "number", this.saveData[item.value], cb);
         }
     }
 }
@@ -638,18 +648,53 @@ class FlexContainer extends Container {
         var self = this;
         var props = ["flex-direction", "justify-content", "align-items", "flex-wrap", "align-content"];
         var helpers = {
-            "flex-direction":  ["row",        "column",   "row-reverse", "column-reverse"                          ],
-            "justify-content": ["flex-start", "flex-end", "center",      "space-between", "space-around"           ],
-            "align-items":     ["flex-start", "flex-end", "center",      "baseline",      "stretch"                ],
-            "flex-wrap":       ["nowrap",     "wrap",     "wrap-reverse"                                           ],
-            "align-content":   ["flex-start", "flex-end", "center",      "space-between", "space-around", "stretch"]
+            "flex-direction": [
+                {"value":"row","display":"Row"},
+                {"value":"column","display":"Column"},
+                {"value":"row-reverse","display":"Reverse row"},
+                {"value":"column-reverse","display":"Reverse column"}
+            ],
+            "justify-content":[
+                {"value":"flex-start","display":"Layout axis start"},
+                {"value":"flex-end","display":"Layout axis end"},
+                {"value":"center","display":"Center"},
+                {"value":"space-between","display":"Space between (align to edges)"},
+                {"value":"space-around","display":"Space between"}
+            ],
+            "align-items":[
+                {"value":"flex-start","display":"Other axis start"},
+                {"value":"flex-end","display":"Other axis end"},
+                {"value":"center","display":"Center"},
+                {"value":"baseline","display":"Widget baseline"},
+                {"value":"stretch","display":"Stretch to fill other axis"}
+            ],
+            "flex-wrap":[
+                {"value":"nowrap","display":"Don't wrap"},
+                {"value":"wrap","display":"Wrap"},
+                {"value":"wrap-reverse","display":"Wrap (reverse)"}
+            ],
+            "align-content":[
+                {"value":"flex-start","display":"Layout axis start"},
+                {"value":"flex-end","display":"Layout axis end"},
+                {"value":"center","display":"Center"},
+                {"value":"space-between","display":"Space between (align to edges)"},
+                {"value":"space-around","display":"Space between"},
+                {"value":"stretch","display":"Stretch to fill line"}
+            ]
         };
+        var display = {
+            "flex-direction":  "Layout axis",
+            "justify-content": "Layout axis align",
+            "align-items":     "Other axis align",
+            "flex-wrap":       "Wrap",
+            "align-content":   "Wrap align"
+        }
         function cb(k, v){
             self.dom.style[k] = v;
             self.saveData[k] = v;
         }
         for(var prop of props){
-            win.addField(prop, "text", window.getComputedStyle(this.dom)[prop], cb, helpers[prop]);
+            win.addField({value: prop, display: display[prop]}, "select", window.getComputedStyle(this.dom)[prop], cb, helpers[prop]);
         }
     }
     
@@ -666,12 +711,16 @@ class FlexContainer extends Container {
             "flex": ["none"],
             "align-self": ["auto", "flex-start", "flex-end", "center", "baseline", "stretch"]
         };
+        var display = {
+            "flex": "Flex Property",
+            "align-self": "Align"
+        }
         function cb(k, v){
             self.dom.style[k] = v;
             self.saveData[k] = v;
         }
         for(var prop of props){
-            win.addField(prop, "text", window.getComputedStyle(self.dom)[prop], cb, helpers[prop]);
+            win.addField({value: prop, display: display[prop]}, prop == "flex" ? "text" : "select", window.getComputedStyle(self.dom)[prop], cb, helpers[prop]);
         }
     }
 }
