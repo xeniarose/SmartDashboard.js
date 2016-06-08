@@ -123,6 +123,7 @@ class DraggableElement {
             this._dragging = false;
             this._dragSize = false;
             var sx, sy, ox, oy, ow, oh;
+            var wdiDx, wdiDy;
             this.dom.onmouseover = this.dom.onmouseout = function (e) {
                 e.preventDefault();
                 return false;
@@ -148,6 +149,16 @@ class DraggableElement {
                     parent.appendChild(self.dom);
                 } else if(self.parent.getDragMode() == "order"){
                     self.dom.classList.add("hl");
+                    var wdi = document.querySelector(".widget-drag-image");
+                    wdi.src = DomUtils.makeWidgetImage(self);
+                    wdi.classList.add("active");
+                    wdi.classList.remove("drop");
+                    var cBox = self.dom.getBoundingClientRect();
+                    wdi.style.top = cBox.top + "px";
+                    wdi.style.left = cBox.left + "px";
+                    wdiDx = e.clientX - cBox.left;
+                    wdiDy = e.clientY - cBox.top;
+                    self.dom.classList.add("reorder-widget");
                 }
                 
                 sx = e.clientX;
@@ -199,6 +210,18 @@ class DraggableElement {
                     DomUtils.checkHoverOnTrash(e, self);
                 }
                 
+                var wdi = document.querySelector(".widget-drag-image");
+                var cBox = self.dom.getBoundingClientRect();
+                wdi.classList.add("drop");
+                wdi.style.top = cBox.top + "px";
+                wdi.style.left = cBox.left + "px";
+                setTimeout((function(wdi){
+                    wdi.classList.remove("drop");
+                    wdi.classList.remove("active");
+                    wdi.style.top = wdi.style.left = "-1000px";
+                    DomUtils.resetClass("reorder-widget");
+                }).bind(this, wdi), 250);
+                
                 e.preventDefault();
                 return false;
             }
@@ -220,6 +243,10 @@ class DraggableElement {
                             this.style.left = ((e.clientX - sx) + ox) + "px";
                             this.style.top = ((e.clientY - sy) + oy) + "px";
                         } else if(self.parent.getDragMode() == "order") {
+                            var wdi = document.querySelector(".widget-drag-image");
+                            wdi.style.left = e.clientX - wdiDx + "px";
+                            wdi.style.top = e.clientY - wdiDy + "px";
+                            
                             var children = self.parent.getChildren();
                             var closestChild = null;
                             var closestDist = Number.MAX_VALUE;

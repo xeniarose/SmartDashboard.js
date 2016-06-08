@@ -553,6 +553,11 @@ SmartDashboard.setEditable = function (flag) {
     } else {
         document.querySelector("#control-editable").classList.remove("toggle-down");
         document.querySelector(".widget-trash").classList.remove("active");
+        var wdi = document.querySelector(".widget-drag-image");
+        wdi.classList.remove("active");
+        wdi.style.top = wdi.style.left = "-1000px";
+        DomUtils.resetClass("reorder-widget");
+        DomUtils.resetClass("hl");
     }
 }
 

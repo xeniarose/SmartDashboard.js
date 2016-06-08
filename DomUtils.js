@@ -127,16 +127,8 @@ class DomUtils {
                     var dashboard = document.querySelector("#dashboard");
                     dashboard.appendChild(dummyWidget.dom);
                     dummyWidget.setEditable(true);
-                    function inlineStyles(el){
-                        var cs = window.getComputedStyle(el);
-                        for(var i = 0; i < cs.length; i++){
-                            el.style[cs[i]] = cs[cs[i]];
-                        }
-                        for(var i = 0; i < el.children.length; i++){
-                            inlineStyles(el.children[i]);
-                        }
-                    }
-                    inlineStyles(dummyWidget.dom);
+                    
+                    DomUtils.inlineStyles(dummyWidget.dom);
                     var width = dummyWidget.dom.offsetWidth + 5;
                     var height = dummyWidget.dom.offsetHeight + 5;
                     dummyWidget.dom.remove();
@@ -191,6 +183,55 @@ class DomUtils {
                 items.push(key);
         items.sort();
         render(root, entries, items, "");
+    }
+    
+    static inlineStyles(el){
+        var cs = window.getComputedStyle(el);
+        for(var i = 0; i < cs.length; i++){
+            el.style[cs[i]] = cs[cs[i]];
+        }
+        for(var i = 0; i < el.children.length; i++){
+            this.inlineStyles(el.children[i]);
+        }
+    }
+    
+    static inlineAndClone(el){
+        var cs = window.getComputedStyle(el);
+        var cloneEl = el.cloneNode();
+        for(var i = 0; i < cs.length; i++){
+            cloneEl.style[cs[i]] = cs[cs[i]];
+        }
+        for(var i = 0; i < el.childNodes.length; i++){
+            if(el.childNodes[i] instanceof Element){
+                var cloneChild = this.inlineAndClone(el.childNodes[i]);
+                cloneEl.appendChild(cloneChild);
+            } else {
+                cloneEl.appendChild(el.childNodes[i].cloneNode());
+            }
+        }
+        return cloneEl;
+    }
+    
+    static makeWidgetImage(widget){
+        var cloneDom = this.inlineAndClone(widget.dom);
+        var width = widget.dom.offsetWidth + 5;
+        var height = widget.dom.offsetHeight + 5;
+        var ds = cloneDom.dataset;
+        for(var key in ds){
+            if(ds.hasOwnProperty(key)){
+                delete ds[key];
+            }
+        }
+        cloneDom.style.top = cloneDom.style.left = "0";
+        cloneDom.removeAttribute("class");
+        cloneDom.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
+        var data = '<svg xmlns="http://www.w3.org/2000/svg" width="' + width + '" height="' + height + '">' +
+            '<foreignObject width="100%" height="100%">' +
+            (new XMLSerializer).serializeToString(cloneDom) +
+            '</foreignObject>' +
+            '</svg>';
+        
+        return "data:image/svg+xml;utf8," + data;
     }
     
     static registerDocumentEventHandlers(){
