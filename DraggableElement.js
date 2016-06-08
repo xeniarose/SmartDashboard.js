@@ -94,7 +94,7 @@ class DraggableElement {
                     self.saveData.style = v;
                     self._applyStyles(self.dom, v);
                 });
-                if(self.parent){
+                if(self.parent && self.parent.givesProperties){
                     win.addSeparator();
                     win.addSectionHeader("Properties added by " + self.parent.constructor.name);
                     self.parent.getPropertiesFromParent(win, self);
@@ -270,6 +270,7 @@ class DraggableElement {
                                 if(parentEl != null){
                                     var dx = e.clientX - (closestChildRect.left + closestChildRect.width / 2);
                                     var dy = e.clientY - (closestChildRect.top + closestChildRect.height / 2);
+                                    
                                     if(dx < 0){
                                         self.dom.remove();
                                         parentEl.insertBefore(self.dom, closestChild.dom);

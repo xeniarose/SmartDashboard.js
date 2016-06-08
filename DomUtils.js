@@ -357,6 +357,7 @@ class DomUtils {
         document.querySelector("#error-screen button.close").onclick = function(){
             document.querySelector("#error-screen").classList.remove("active");
             document.querySelector(".dialog-bg").classList.remove("active");
+            SmartDashboard.exitable = true;
         };
         
         document.querySelector("#control-about").onclick = function(){

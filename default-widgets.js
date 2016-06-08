@@ -635,6 +635,7 @@ class FlexContainer extends Container {
     onNew(){
         this.dom.style.width = this.dom.style.height = "100px";
         this.dom.classList.add("drag-order");
+        this.givesProperties = true;
     }
     
     restoreSave(){

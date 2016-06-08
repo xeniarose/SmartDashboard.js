@@ -4,7 +4,8 @@ var SmartDashboard = {
     widgetTypes: {},
     editable: false,
     options: {},
-    plugins: []
+    plugins: [],
+    exitable: true
 };
 
 SmartDashboard.handleError = function(e, notSerious) {
@@ -24,7 +25,7 @@ SmartDashboard.handleError = function(e, notSerious) {
             gui.Shell.openExternal(gui.App.manifest.repositories[0].url + "/issues/new?body="
                                    + encodeURIComponent("```\n" + msg + "\n```"));
         };
-        
+        SmartDashboard.exitable = false;
         DomUtils.openBlurredDialog("#error-screen");
     }
 }
@@ -435,6 +436,9 @@ SmartDashboard.init = function () {
 }
 
 SmartDashboard.onExit = function(){
+    if(!SmartDashboard.exitable){
+        return;
+    }
     SmartDashboard.confirm("Exit SmartDashboard.js?", function(v){
         if(v){
             global.SmartDashboard.saveData();
@@ -628,7 +632,9 @@ SmartDashboard.checkUpdate = function(notifyIfNoneCb) {
                 var url = release.assets[0].browser_download_url;
                 SmartDashboard.prompt("Update " + release.tag_name + " is available. Update now?", function(res){
                     if(res != null) {
+                        SmartDashboard.exitable = false;
                         document.querySelector("#update-screen h3 .status").textContent = "Downloading update";
+                        document.querySelector("#update-screen .dl-info").textContent = "Waiting...";
                         DomUtils.openBlurredDialog("#update-screen");
                         SmartDashboard.saveUpdate(release.tag_name, url, function(percent, current, total){
                             document.querySelector("#update-screen progress").value = percent;
@@ -638,6 +644,7 @@ SmartDashboard.checkUpdate = function(notifyIfNoneCb) {
                                 (total / 1000000).toFixed(1) + " MB";
                         }, function(err){
                             if(err){
+                                document.querySelector("#update-screen").classList.remove("active");
                                 SmartDashboard.handleError(err);
                                 return;
                             }

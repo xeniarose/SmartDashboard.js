@@ -13,6 +13,41 @@ body, .container, .dialog-bg {
     background: #464646;
 }
 
+.dialog {
+    background: #2A2A2A;
+    box-shadow: 0px 0px 10px #ddd, inset 0px 0px 5px black;
+    color: white;
+}
+
+#error-screen .dialog {
+    background: linear-gradient(
+        #f22 0%,
+        #f22 20px,
+        #2A2A2A 20px,
+        #2A2A2A 100%
+    );
+}
+
+#error-screen .dialog .error-details-pre {
+    background: #464646;
+    box-shadow: 0px 0px 3px black;
+    margin: 1em 0.5em;
+}
+
+#update-screen progress {
+    -webkit-appearance: none;
+}
+
+#update-screen progress::-webkit-progress-bar {
+    background: #464646;
+}
+
+#update-screen progress::-webkit-progress-value {
+    background: #01D3FF;
+    opacity: 0.5;
+    transition: width 0.2s;
+}
+
 .container.drop-target, .container.drop-target[data-editing=true]:not(.not-editing), .container.drop-target[data-editing=true] {
     background: #2A2F2A;
 }

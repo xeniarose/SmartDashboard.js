@@ -328,6 +328,12 @@ body.vfx-allowed .removed-element {
     resize: none;
 }
 
+.widget[data-editable=true] .widget-input {
+    -webkit-user-select: none;
+    user-select: none;
+    pointer-events: none;
+}
+
 .widget label, .widget input[type=checkbox], .widget input[type=radio] {
     align-self: center;
 }
@@ -507,8 +513,8 @@ input[type=checkbox].redgreen:checked {
     color: black;
     display: flex;
     flex-direction: column;
-    max-width: 98%;
-    max-height: 98%;
+    max-width: 90%;
+    max-height: 90%;
 }
 
 body.vfx-allowed .dialog {
@@ -583,6 +589,10 @@ body.vfx-allowed .dialog-bg-inner {
         #fff 20px,
         #fff 100%
     );
+}
+
+#error-screen h3 {
+    margin-top: 1.5em;
 }
 
 #error-screen .dialog .error-details-pre {
@@ -805,6 +815,15 @@ body.vfx-allowed .widget-drag-image.drop {
 
 .widget-drag-image.active {
     opacity: 1;
+}
+
+.reorder-image {
+    display: block;
+    position: fixed;
+}
+
+body.vfx-allowed .reorder-image.active {
+    transition: top 0.2s, left 0.2s;
 }
 
 #update-screen progress {
