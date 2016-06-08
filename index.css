@@ -497,6 +497,9 @@ input[type=checkbox].redgreen:checked {
     text-overflow: ellipsis;
     overflow: hidden;
     margin-right: 20px;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
 }
 
 .profile-container * {

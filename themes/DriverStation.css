@@ -45,7 +45,6 @@ body, .container, .dialog-bg {
 #update-screen progress::-webkit-progress-value {
     background: #01D3FF;
     opacity: 0.5;
-    transition: width 0.2s;
 }
 
 .container.drop-target, .container.drop-target[data-editing=true]:not(.not-editing), .container.drop-target[data-editing=true] {

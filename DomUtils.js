@@ -400,13 +400,24 @@ class DomUtils {
     };
     
     static openBlurredDialog(id){
-        nw.Window.get().capturePage(function(res){
-            var bg = document.querySelector(".dialog-bg-inner");
-            if(!bg.parentElement.classList.contains("active"))
-                bg.style.background = "url(" + res + ")";
+        var bg = document.querySelector(".dialog-bg-inner");
+        function complete(){
             bg.parentElement.classList.add("active");
             document.querySelector(id).classList.add("active");
-        });
+        }
+        try {
+            nw.Window.get().capturePage(function(res){
+                if(!bg.parentElement.classList.contains("active"))
+                    bg.style.background = "url(" + res + ")";
+                complete();
+            });
+        } catch(e){
+            // nw sometimes fails to capture with "unknown error"
+            // so we ignore it and open the dialog anyway
+            // in any case the error dialog itself calls this function
+            console.error(e);
+            complete();
+        }
     }
     
     static checkHoverOnTrash(e, widgetDragging){

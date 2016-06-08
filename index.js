@@ -428,11 +428,13 @@ SmartDashboard.init = function () {
         if(data.options.ip == ""){
             SmartDashboard.showOptions();
         }
-        
-        if(data.options.doUpdateCheck){
-            SmartDashboard.checkUpdate();
-        }
     }, 500); // wait for things to load a bit
+    
+    if(data.options.doUpdateCheck){
+        setTimeout(function(){
+            SmartDashboard.checkUpdate();
+        }, 10000);
+    }
 }
 
 SmartDashboard.onExit = function(){
@@ -449,6 +451,7 @@ SmartDashboard.onExit = function(){
 };
 
 SmartDashboard.loadWidgets = function(){
+    SmartDashboard._loadFinished = false;
     var widgets = [];
     try {
         widgets = JSON.parse(fs.readFileSync(FileUtils.getDataLocations().layouts + SmartDashboard.options.profile + ".json").toString());
@@ -471,13 +474,44 @@ SmartDashboard.loadWidgets = function(){
         return widget;
     };
 
-    for (var wData of widgets) {
+    var i = 0;
+    var profile = SmartDashboard.options.profile;
+    
+    if(widgets.length > 20){
+        document.querySelector("#update-screen h3 .status").textContent = "Loading widgets";
+        document.querySelector("#update-screen .update-info").textContent = "";
+        document.querySelector("#update-screen .dl-info").textContent = "";
+        DomUtils.openBlurredDialog("#update-screen");
+    }
+    
+    var progress = document.querySelector("#update-screen progress");
+    var status = document.querySelector("#update-screen .dl-info");
+    
+    function next(){
+        if(i >= widgets.length || profile!= SmartDashboard.options.profile){
+            document.querySelector("#update-screen").classList.remove("active");
+            document.querySelector(".dialog-bg").classList.remove("active");
+            if(i >= widgets.length){
+                SmartDashboard._loadFinished = true;
+            }
+            return;
+        }
+        if(widgets.length > 20){
+            progress.value = Math.floor(i * 100 / widgets.length);
+            status.textContent = i + "/" + widgets.length;
+        }
+        
+        var wData = widgets[i];
         if (!SmartDashboard.widgetTypes.hasOwnProperty(wData.type)) {
             console.warn("No widget for:", wData.type);
-            continue;
+        } else {
+            loadWidget(wData);
         }
-        loadWidget(wData);
+        i++;
+        setTimeout(next.bind(this), 20);
     }
+    
+    next();
 }
 
 SmartDashboard.saveData = function() {
@@ -485,8 +519,13 @@ SmartDashboard.saveData = function() {
     try {
         var data = {
             sdver: SmartDashboard.version
-        }
-
+        };
+        
+        data.options = SmartDashboard.options;
+        data = JSON.stringify(data);
+        fs.writeFileSync(FileUtils.getDataLocations().save, data);
+        
+        if(!SmartDashboard._loadFinished) return;
         var widgets = [];
 
         var topLevelWidgets = Array.prototype.map.call(document.querySelector("#dashboard").children, function (el) {
@@ -518,11 +557,6 @@ SmartDashboard.saveData = function() {
             saveWidget(widget, widgets);
         }
 
-        data.options = SmartDashboard.options;
-        data = JSON.stringify(data);
-
-        fs.writeFileSync(FileUtils.getDataLocations().save, data);
-
         fs.writeFileSync(FileUtils.getDataLocations().layouts + SmartDashboard.options.profile + ".json", JSON.stringify(widgets));
     } catch (e) {
         SmartDashboard.handleError(e);
@@ -530,6 +564,9 @@ SmartDashboard.saveData = function() {
 }
 
 SmartDashboard.switchProfile = function(newProfile, forceNoSave){
+    if(newProfile == SmartDashboard.options.profile){
+        return;
+    }
     if(!forceNoSave) {
         SmartDashboard.saveData();
     }
@@ -634,6 +671,7 @@ SmartDashboard.checkUpdate = function(notifyIfNoneCb) {
                     if(res != null) {
                         SmartDashboard.exitable = false;
                         document.querySelector("#update-screen h3 .status").textContent = "Downloading update";
+                        document.querySelector("#update-screen .update-info").textContent = "SmartDashboard.js will automatically restart once the update is downloaded.";
                         document.querySelector("#update-screen .dl-info").textContent = "Waiting...";
                         DomUtils.openBlurredDialog("#update-screen");
                         SmartDashboard.saveUpdate(release.tag_name, url, function(percent, current, total){
