@@ -632,6 +632,8 @@ function isVersionGreater(v1, v2){
     for(var i = 0; i < Math.min(v1.length, v2.length); i++){
         if(v1[i] > v2[i]){
             return true;
+        } else if(v1[i] < v2[i]){
+            return false;
         }
     }
     return false;
