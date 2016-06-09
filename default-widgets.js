@@ -619,10 +619,6 @@ class FlowContainer extends Container {
     getDragMode(){
         return "order";
     }
-    
-    onNew(){
-        this.dom.classList.add("drag-order");
-    }
 }
 
 SmartDashboard.registerWidget(FlowContainer, "container");
@@ -634,11 +630,10 @@ class FlexContainer extends Container {
     
     onNew(){
         this.dom.style.width = this.dom.style.height = "100px";
-        this.dom.classList.add("drag-order");
-        this.givesProperties = true;
     }
     
     restoreSave(){
+        this.givesProperties = true;
         var props = ["flex-direction", "justify-content", "align-items", "flex-wrap", "align-content"];
         for(var k of props){
             this.dom.style[k] = this.saveData[k];
@@ -809,3 +804,213 @@ class MjpegStream extends UnlinkedWidget {
 }
 
 SmartDashboard.registerWidget(MjpegStream, "unlinked");
+
+class USBCameraStream extends UnlinkedWidget {
+    render(){
+        this._img = document.createElement("img");
+        this._img.classList.add("stream");
+        this.dom.appendChild(this._img);
+        var self = this;
+        this._img.addEventListener('load', function() {
+            var width = this.naturalWidth;
+            var height = this.naturalHeight;
+            self.aspectRatio = width / height;
+        });
+        
+        this.saveData.port = this.saveData.port || 1180;
+        this.saveData.resolution = this.saveData.resolution || "480x360";
+        this.saveData.fps = this.saveData.fps || 30;
+        
+        this.listenTimeout = setTimeout(this.listen.bind(this), 1);
+    }
+    
+    onNew(){
+        this._img.style.minWidth = "100px";
+        this._img.style.minHeight = "100px";
+    }
+    
+    updateImg(path){
+        this._img.src = path;
+    }
+    
+    createPropertiesView(win){
+        var self = this;
+        function cb(k, v){
+            self.saveData[k] = v;
+        }
+        
+        win.addField({ value: "port", display: "Port" }, "number", self.saveData.port, cb);
+        win.addField({ value: "resolution", display: "Resolution" }, "select", self.saveData.resolution, cb, ["640x480", "320x240", "160x120"]);
+        win.addField({ value: "fps", display: "FPS" }, "number", self.saveData.fps, cb);
+    }
+    
+    destroy(){
+        if(this.sock) this.sock.destroy();
+        this._destroyed = true;
+    }
+    
+    connError(err){
+        console.error("USBCameraStream: ", err);
+        this._img.src = "";
+        if(err && err.message) this._img.alt = "Stream error: " + err.message;
+        clearTimeout(this.listenTimeout);
+        this.listenTimeout = setTimeout(this.listen.bind(this), 5000); // wait a bit before trying again
+    }
+    
+    listen(){
+        if(this.sock) this.sock.destroy();
+        if(this._destroyed) return;
+        this.sock = new net.Socket();
+        this.sock.on('data', this.updateLoop.bind(this));
+        this.sock.on('end', this.connError.bind(this));
+        this.sock.on('close', this.connError.bind(this));
+        this.sock.on('error', this.connError.bind(this));
+        this.sock.on('connect', this.initStream.bind(this));
+        this.state = USBCameraStream.STATE_READ_HEADER;
+        this.headerOffset = 0;
+        this.frameOffset = 0;
+        this.frameHeader = new Buffer(8);
+        this.sock.connect(parseInt(this.saveData.port), SmartDashboard.options.ip);
+    }
+    
+    _writeInt(int){
+        if(!this.sock) return;
+        var buf = new Buffer(4);
+        // DataOutputStream is big-endian
+        buf.writeInt32BE(int);
+        this.sock.write(buf);
+    }
+    
+    initStream(){
+        console.info("USBCameraStream: connected");
+        this._img.src = "";
+        this._img.alt = "Connected, waiting for stream";
+        // write header
+        this._writeInt(parseInt(this.saveData.fps));
+        this._writeInt(USBCameraStream.HW_COMPRESSION);
+        this._writeInt(USBCameraStream.RESOLUTIONS[this.saveData.resolution] || 0);
+    }
+    
+    // repeatedly calls itself until data is consumed
+    // switches between 2 states
+    updateLoop(data){
+        console.log("USBCameraStream: update loop", this.state);
+        if(this.state == USBCameraStream.STATE_READ_HEADER){
+            for(var i = 0; i < Math.min(data.length, 8); i++) {
+                this.frameHeader[this.headerOffset] = data[i];
+                this.headerOffset++;
+            }
+            if(this.headerOffset >= 8){
+                if(this.frameHeader.slice(0, 4).compare(USBCameraStream.MAGIC_NUMBERS) !== 0){
+                    console.warn("USBCameraStream: out of sync (didn't see magic numbers)");
+                    this.sock.end();
+                    return;
+                }
+                this.frameSize = this.frameHeader.readInt32BE(4);
+                this.frame = new Buffer(this.frameSize + USBCameraStream.HUFFMAN_TABLE.length);
+                this.frameOffset = 0;
+                this.state = USBCameraStream.STATE_READ_FRAME;
+                if(i < data.length) this.updateLoop(data.slice(i));
+            }
+        } else if(this.state == USBCameraStream.STATE_READ_FRAME){
+            var framePiece = data.slice(0, Math.min(data.length, this.frameSize - this.frameOffset));
+            framePiece.copy(this.frame, frameOffset);
+            frameOffset += framePiece.length;
+            
+            if(frameOffset >= frameSize){
+                var res = this.parseFrame(this.frame);
+                if(res !== true){
+                    this.sock.end();
+                    console.warn("USBCameraStream: ", res);
+                    return;
+                }
+                
+                this.state = USBCameraStream.STATE_READ_HEADER;
+                this.headerOffset = 0;
+            }
+            
+            if(framePiece.length < data.length){
+                this.updateLoop(data.slice(framePiece.length));
+            }
+        }
+    }
+    
+    parseFrame(data){
+        var size = this.frameSize;
+        // I have no idea what any of this does ¯\_(ツ)_/¯
+        // I just ported it to node.js
+        if (!(size >= 4 && (data[0] & 255) == 255
+              && (data[1] & 255) == 216
+              && (data[size - 2] & 255) == 255
+              && (data[size - 1] & 255) == 217)) {
+            return "Data is not valid";
+        }
+        var pos = 2;
+        var has_dht = false;
+        while (!has_dht) {
+            if (!(pos + 4 <= size)) {
+                return "pos doesn't match size";
+            }
+            if (!((data[pos] & 255) == 255)) {
+                return "pos is not 255";
+            }
+            if ((data[pos + 1] & 255) == 196) {
+                has_dht = true;
+            } else if ((data[pos + 1] & 255) == 218)
+                break;
+            var marker_size = ((data[pos + 2] & 255) << 8)
+                + (data[pos + 3] & 255);
+            pos += marker_size + 2;
+        }
+        if (!has_dht) {
+            data.copy(data, pos + USBCameraStream.HUFFMAN_TABLE.length, pos, size - pos);
+            data.copy(data, pos, 0, USBCameraStream.HUFFMAN_TABLE.length);
+            size += huffman_table.length;
+        }
+        
+        var imgUrl = "data:image/jpeg;base64," + data.slice(0, size).toString('base64');
+        updateImg(imgUrl);
+           
+        return true;
+    }
+}
+USBCameraStream.STATE_READ_HEADER = 0;
+USBCameraStream.STATE_READ_FRAME = 1;
+USBCameraStream.MAGIC_NUMBERS = new Buffer([1, 0, 0, 0]);
+USBCameraStream.HUFFMAN_TABLE = new Buffer([255, 196, 1, 162, 0, 0, 1, 5, 1, 1, 1,
+				1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+				11, 1, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 2,
+				3, 4, 5, 6, 7, 8, 9, 10, 11, 16, 0, 2, 1, 3, 3, 2, 4, 3, 5, 5,
+				4, 4, 0, 0, 1, 125, 1, 2, 3, 0, 4, 17, 5, 18, 33, 49, 65, 6, 19,
+				81, 97, 7, 34, 113, 20, 50, 129, 145, 161, 8, 35, 66, 177, 193,
+				21, 82, 209, 240, 36, 51, 98, 114, 130, 9, 10, 22, 23, 24, 25,
+				26, 37, 38, 39, 40, 41, 42, 52, 53, 54, 55, 56, 57, 58, 67, 68,
+				69, 70, 71, 72, 73, 74, 83, 84, 85, 86, 87, 88, 89, 90, 99, 100,
+				101, 102, 103, 104, 105, 106, 115, 116, 117, 118, 119, 120, 121,
+				122, 131, 132, 133, 134, 135, 136, 137, 138, 146, 147, 148, 149,
+				150, 151, 152, 153, 154, 162, 163, 164, 165, 166, 167, 168, 169,
+				170, 178, 179, 180, 181, 182, 183, 184, 185, 186, 194, 195, 196,
+				197, 198, 199, 200, 201, 202, 210, 211, 212, 213, 214, 215, 216,
+				217, 218, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 241,
+				242, 243, 244, 245, 246, 247, 248, 249, 250, 17, 0, 2, 1, 2, 4,
+				4, 3, 4, 7, 5, 4, 4, 0, 1, 2, 119, 0, 1, 2, 3, 17, 4, 5, 33, 49,
+				6, 18, 65, 81, 7, 97, 113, 19, 34, 50, 129, 8, 20, 66, 145, 161,
+				177, 193, 9, 35, 51, 82, 240, 21, 98, 114, 209, 10, 22, 36, 52,
+				225, 37, 241, 23, 24, 25, 26, 38, 39, 40, 41, 42, 53, 54, 55,
+				56, 57, 58, 67, 68, 69, 70, 71, 72, 73, 74, 83, 84, 85, 86, 87,
+				88, 89, 90, 99, 100, 101, 102, 103, 104, 105, 106, 115, 116,
+				117, 118, 119, 120, 121, 122, 130, 131, 132, 133, 134, 135, 136,
+				137, 138, 146, 147, 148, 149, 150, 151, 152, 153, 154, 162, 163,
+				164, 165, 166, 167, 168, 169, 170, 178, 179, 180, 181, 182, 183,
+				184, 185, 186, 194, 195, 196, 197, 198, 199, 200, 201, 202, 210,
+				211, 212, 213, 214, 215, 216, 217, 218, 226, 227, 228, 229, 230,
+				231, 232, 233, 234, 242, 243, 244, 245, 246, 247, 248, 249,
+				250]);
+USBCameraStream.RESOLUTIONS = {
+    "640x480": 0,
+	"320x240": 1,
+	"160x120": 2
+};
+USBCameraStream.HW_COMPRESSION = -1;
+
+SmartDashboard.registerWidget(USBCameraStream, "unlinked");

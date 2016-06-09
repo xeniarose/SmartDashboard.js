@@ -314,11 +314,16 @@ class DomUtils {
         
         dashboard.ondragover = function(e){
             e.preventDefault();
-            e.dataTransfer.dropEffect = "copy";
+            var dt = e.dataTransfer;
+            if(dt.getData("application/sd.vartype"))
+                dt.dropEffect = "copy";
         };
         
         dashboard.ondrop = function(e){
             var dt = e.dataTransfer;
+            if(!dt.getData("application/sd.vartype")){
+                return;
+            }
             WidgetUtils.defaultNewWidget(dt.getData("application/sd.vartype"),
                     dt.getData("application/sd.varname"),
                     {left: e.clientX + document.querySelector("#dashboard").scrollLeft,

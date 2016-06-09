@@ -10,7 +10,7 @@ body, .container, .dialog-bg {
 }
 
 .widget, .button-pane, #entries, .dialog-header {
-    background: #464646;
+    background-color: #464646;
 }
 
 .dialog {
@@ -171,4 +171,8 @@ a {
 
 .widget-update {
     text-shadow: 0px 0px 5px black, 0px 0px 1px black;
+}
+
+.widget.widget-USBCameraStream .stream {
+    text-shadow: 0px 0px 5px #ff1a1a;
 }
