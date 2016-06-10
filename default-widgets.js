@@ -870,6 +870,8 @@ class USBCameraStream extends UnlinkedWidget {
         this.headerOffset = 0;
         this.frameOffset = 0;
         this.frameHeader = new Buffer(8);
+        this._img.src = "";
+        this._img.alt = "Connecting";
         this.sock.connect(parseInt(this.saveData.port), SmartDashboard.options.ip);
     }
     
@@ -914,8 +916,8 @@ class USBCameraStream extends UnlinkedWidget {
             }
         } else if(this.state == USBCameraStream.STATE_READ_FRAME){
             var framePiece = data.slice(0, Math.min(data.length, this.frameSize - this.frameOffset));
-            framePiece.copy(this.frame, frameOffset);
-            frameOffset += framePiece.length;
+            framePiece.copy(this.frame, this.frameOffset);
+            this.frameOffset += framePiece.length;
             
             if(frameOffset >= frameSize){
                 var res = this.parseFrame(this.frame);
@@ -964,7 +966,7 @@ class USBCameraStream extends UnlinkedWidget {
         }
         if (!has_dht) {
             data.copy(data, pos + USBCameraStream.HUFFMAN_TABLE.length, pos, size - pos);
-            data.copy(data, pos, 0, USBCameraStream.HUFFMAN_TABLE.length);
+            USBCameraStream.HUFFMAN_TABLE.copy(data, pos, 0, USBCameraStream.HUFFMAN_TABLE.length);
             size += huffman_table.length;
         }
         
