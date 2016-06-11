@@ -91,15 +91,18 @@ class WidgetUtils {
             }
         }
         
+        if(name == "onmouseup"){
+            var trash = document.querySelector(".widget-trash");
+            trash.classList.remove("hover");
+        }
+        
         if(name == "onmousemove"){
-            var x = e.clientX;
-            var y = e.clientY;
             var trash = document.querySelector(".widget-trash");
             var rect = trash.getBoundingClientRect();
-            if(x > rect.left && x < rect.right && y > rect.top && y < rect.bottom){
-                trash.classList.add("hover");
+            if(e.clientX > rect.left && e.clientX < rect.right && e.clientY > rect.top && e.clientY < rect.bottom){
+                DomUtils.showTooltip("Drag widgets here to delete", rect.right + 10, rect.top + rect.height / 2, true);
             } else {
-                trash.classList.remove("hover");
+                DomUtils.hideTooltip();
             }
         }
     }

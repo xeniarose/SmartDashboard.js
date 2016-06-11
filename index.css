@@ -891,3 +891,46 @@ body.vfx-allowed .widget-trash {
     user-select: none;
     -webkit-user-select: none;
 }
+
+.tooltip {
+    background: rgba(0, 0, 0, 0.6);
+    user-select: none;
+    -webkit-user-select: none;
+    color: white;
+    border-radius: 10px;
+    position: absolute;
+    top: -1000px;
+    left: -1000px;
+    opacity: 0;
+    pointer-events: none;
+    padding: 5px;
+}
+
+.tooltip::after {
+    content: "";
+    position: absolute;
+    top: calc(50% - 8px);
+    width: 8px;
+    height: 8px;
+    box-sizing: border-box;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+}
+
+.tooltip.caret-left::after {
+    left: -8px;
+    border-right: 8px solid rgba(0, 0, 0, 0.6);
+}
+
+.tooltip.caret-right::after {
+    right: -8px;
+    border-left: 8px solid rgba(0, 0, 0, 0.6);
+}
+
+body.vfx-allowed .tooltip {
+    transition: opacity 0.3s, background 0.3s, box-shadow 0.3s;
+}
+
+.tooltip.active {
+    opacity: 1;
+}

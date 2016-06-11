@@ -425,13 +425,24 @@ class DomUtils {
         }
     }
     
-    static checkHoverOnTrash(e, widgetDragging){
-        var x = e.clientX;
-        var y = e.clientY;
+    static checkHoverOnTrash(e, widgetDragging, doDelete){
         var trash = document.querySelector(".widget-trash");
         var rect = trash.getBoundingClientRect();
-        if(widgetDragging && x > rect.left && x < rect.right && y > rect.top && y < rect.bottom){
-            widgetDragging.remove();
+        
+        if(widgetDragging && CoordinateUtils.isRectIntersecting(rect, widgetDragging.dom.getBoundingClientRect())){
+            if(doDelete){
+                var dom = widgetDragging.dom;
+                var pos = widgetDragging.getPosition();
+                dom.style.transition = "left 0.3s, top 0.3s, transform 0.3s";
+                dom.style.left = ((rect.left + rect.right) / 2 - pos.w / 2) + "px";
+                dom.style.top = (rect.top - pos.h / 2 + 10) + "px";
+                
+                widgetDragging.remove();
+            }
+            
+            trash.classList.add("hover");
+        } else {
+            trash.classList.remove("hover");
         }
     }
     
@@ -457,6 +468,22 @@ class DomUtils {
     
     static hideUpdateButton(){
         document.querySelector(".widget-update").classList.remove("active");
+    }
+    
+    static showTooltip(content, x, y, caretLeft){
+        var t = document.querySelector(".tooltip");
+        t.textContent = content;
+        t.style.top = (y - t.offsetHeight / 2) + "px";
+        t.style.removeProperty("left");
+        t.style.removeProperty("right");
+        t.style[caretLeft ? "left" : "right"] = x + "px";
+        
+        t.classList.add(caretLeft ? "caret-left" : "caret-right");
+        t.classList.add("active");
+    }
+    
+    static hideTooltip(){
+        document.querySelector(".tooltip").classList.remove("active");
     }
 }
 

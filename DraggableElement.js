@@ -207,7 +207,7 @@ class DraggableElement {
                 self.mouseUpHandler();
                 
                 if(!e.shiftKey){
-                    DomUtils.checkHoverOnTrash(e, self);
+                    DomUtils.checkHoverOnTrash(e, self, true);
                 }
                 
                 var wdi = document.querySelector(".widget-drag-image");
@@ -281,6 +281,10 @@ class DraggableElement {
                                 }
                             }
                         }
+                    }
+                    
+                    if(!e.shiftKey){
+                        DomUtils.checkHoverOnTrash(e, self, false);
                     }
                 
                     if(!self._dragSize && !e.shiftKey){
