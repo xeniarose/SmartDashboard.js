@@ -776,7 +776,28 @@ class MjpegStream extends UnlinkedWidget {
             //self._img.style.minWidth = width + "px";
             //self._img.style.minHeight = height + "px";
             self.aspectRatio = width / height;
+            
+            this.alt = "Lost connection; please reconnect";
+            
+            if(!self.streaming){
+                self.streaming = true;
+                var pos = self.getPosition();
+                self.setPosition(pos.x, pos.y, width, height);
+            }
         });
+        this._img.alt = "Connecting...";
+        this._img.addEventListener('error', function(){
+            this.alt = "Failed to connect";
+            this.removeAttribute("src");
+            self.streaming = false;
+            clearTimeout(self.retryTimeout);
+            self.retryTimeout = setTimeout(function(){
+                self._img.alt = "Connecting...";
+                self._img.src = self.saveData.mjpegUrl;
+            }, 5000);
+        });
+        
+        this.streaming = false;
         
         this.saveData.mjpegUrl = this.saveData.mjpegUrl || "http://10.te.am.11/mjpg/video.mjpg";
         
@@ -801,6 +822,17 @@ class MjpegStream extends UnlinkedWidget {
         
         win.addField("url", "text", self.saveData.mjpegUrl, cb);
     }
+    
+    createContextMenu(menu){
+        var self = this;
+        menu.append(new gui.MenuItem({
+            label: "Reconnect",
+            click: function () {
+                self._img.alt = "Connecting...";
+                self._img.src = self.saveData.mjpegUrl;
+            }
+        }));
+    }
 }
 
 SmartDashboard.registerWidget(MjpegStream, "unlinked");
@@ -815,7 +847,16 @@ class USBCameraStream extends UnlinkedWidget {
             var width = this.naturalWidth;
             var height = this.naturalHeight;
             self.aspectRatio = width / height;
+            this.style.removeProperty("min-width");
+            this.style.removeProperty("min-height");
+            if(!self.streaming){
+                self.streaming = true;
+                var pos = self.getPosition();
+                self.setPosition(pos.x, pos.y, width, height);
+            }
         });
+        
+        this.streaming = false;
         
         this.saveData.port = this.saveData.port || 1180;
         this.saveData.resolution = this.saveData.resolution || "480x360";
@@ -837,6 +878,10 @@ class USBCameraStream extends UnlinkedWidget {
         var self = this;
         function cb(k, v){
             self.saveData[k] = v;
+            if(self.sock){
+                self.sock.end();
+                self.sock.destroy();
+            }
         }
         
         win.addField({ value: "port", display: "Port" }, "number", self.saveData.port, cb);
@@ -861,7 +906,7 @@ class USBCameraStream extends UnlinkedWidget {
         if(this.sock) this.sock.destroy();
         if(this._destroyed) return;
         this.sock = new net.Socket();
-        this.sock.on('data', this.updateLoop.bind(this));
+        this.sock.on('data', this.onData.bind(this));
         this.sock.on('end', this.connError.bind(this));
         this.sock.on('close', this.connError.bind(this));
         this.sock.on('error', this.connError.bind(this));
@@ -893,12 +938,16 @@ class USBCameraStream extends UnlinkedWidget {
         this._writeInt(USBCameraStream.RESOLUTIONS[this.saveData.resolution] || 0);
     }
     
+    onData(data){
+        this.updateLoop(data);
+    }
+    
     // repeatedly calls itself until data is consumed
     // switches between 2 states
     updateLoop(data){
-        console.log("USBCameraStream: update loop", this.state);
         if(this.state == USBCameraStream.STATE_READ_HEADER){
-            for(var i = 0; i < Math.min(data.length, 8); i++) {
+            var numIters = Math.min(data.length, 8 - this.headerOffset);
+            for(var i = 0; i < numIters; i++) {
                 this.frameHeader[this.headerOffset] = data[i];
                 this.headerOffset++;
             }
@@ -906,6 +955,7 @@ class USBCameraStream extends UnlinkedWidget {
                 if(this.frameHeader.slice(0, 4).compare(USBCameraStream.MAGIC_NUMBERS) !== 0){
                     console.warn("USBCameraStream: out of sync (didn't see magic numbers)");
                     this.sock.end();
+                    this.sock.destroy();
                     return;
                 }
                 this.frameSize = this.frameHeader.readInt32BE(4);
@@ -919,10 +969,11 @@ class USBCameraStream extends UnlinkedWidget {
             framePiece.copy(this.frame, this.frameOffset);
             this.frameOffset += framePiece.length;
             
-            if(frameOffset >= frameSize){
+            if(this.frameOffset >= this.frameSize){
                 var res = this.parseFrame(this.frame);
                 if(res !== true){
                     this.sock.end();
+                    this.sock.destroy();
                     console.warn("USBCameraStream: ", res);
                     return;
                 }
@@ -971,7 +1022,7 @@ class USBCameraStream extends UnlinkedWidget {
         }
         
         var imgUrl = "data:image/jpeg;base64," + data.slice(0, size).toString('base64');
-        updateImg(imgUrl);
+        this.updateImg(imgUrl);
            
         return true;
     }

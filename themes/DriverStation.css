@@ -173,6 +173,6 @@ a {
     text-shadow: 0px 0px 5px black, 0px 0px 1px black;
 }
 
-.widget.widget-USBCameraStream .stream {
+.widget.widget-USBCameraStream .stream, .widget.widget-MjpegStream .stream {
     text-shadow: 0px 0px 5px #ff1a1a;
 }

@@ -669,7 +669,7 @@ body.vfx-allowed .dialog-bg-inner {
     height: 100%;
 }
 
-.widget.widget-USBCameraStream .stream {
+.widget.widget-USBCameraStream .stream, .widget.widget-MjpegStream .stream {
     white-space: pre-wrap;
     word-wrap: break-word;
     font-family: monospace;
