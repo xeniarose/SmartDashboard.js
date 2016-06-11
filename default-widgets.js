@@ -1067,3 +1067,102 @@ USBCameraStream.RESOLUTIONS = {
 USBCameraStream.HW_COMPRESSION = -1;
 
 SmartDashboard.registerWidget(USBCameraStream, "unlinked");
+
+class Scheduler extends Widget {
+    render() {
+        this.view = document.createElement("div");
+        this.view.classList.add("running-commands");
+        this.renderCommands();
+        
+        this.cancel = document.createElement("button");
+        this.cancel.classList.add("cancel");
+        this.cancel.appendChild(DomUtils.createIcon("stop"));
+        this.cancel.appendChild(document.createTextNode(" Stop Commands"));
+        this.cancel.disabled = true;
+        this.cancel.onclick = this.cancelSelected.bind(this);
+        
+        var cont = document.createElement("div");
+        cont.appendChild(this.view);
+        cont.appendChild(this.cancel);
+        cont.classList.add("scheduler-container");
+        this.root.appendChild(cont);
+    }
+    
+    cancelSelected(){
+        var selectedIds = [].map.call(this.root.querySelectorAll("input:checked"), function(el){
+            return parseFloat(el.parentElement.parentElement.dataset.commandid);
+        });
+        this._valTable.put("Cancel", selectedIds);
+        [].forEach.call(this.root.querySelectorAll("input:checked"), function(el){
+            el.checked = false;
+        });
+        this.cancel.disabled = true;
+    }
+    
+    createCommandItem(name, id, selectedIds){
+        var item = document.createElement("div");
+        item.classList.add("command");
+        var check = document.createElement("input");
+        check.type = "checkbox";
+        if(selectedIds.indexOf(id) > -1){
+            check.checked = true;
+        }
+        check.onchange = (function(){
+            this.cancel.disabled = this.root.querySelectorAll("input:checked").length == 0;
+        }).bind(this);
+        var label = document.createElement("label");
+        label.appendChild(check);
+        label.appendChild(document.createTextNode(name));
+        item.dataset.commandid = id;
+        item.appendChild(label);
+        this.view.appendChild(item);
+    }
+
+    renderCommands() {
+        var selectedIds = [].map.call(this.root.querySelectorAll("input:checked"), function(el){
+            return parseFloat(el.parentElement.parentElement.dataset.commandid);
+        });
+        
+        this.view.innerHTML = "";
+        var names = this._valTable.get("Names");
+        var ids = this._valTable.get("Ids");
+        
+        if(typeof names == "undefined" || names == null || names.length == 0){
+            var item = document.createElement("div");
+            item.textContent = "(no running commands)";
+            this.view.appendChild(item);
+            return;
+        }
+        
+        var commands = {};
+        for(var i = 0; i < names.length; i++){
+            commands[names[i]] = ids[i];
+        }
+        names.sort();
+        for(var name of names){
+            this.createCommandItem(name, commands[name], selectedIds);
+        }
+        
+        if(this.cancel) this.cancel.disabled = selectedIds.length == 0;
+    }
+    
+    _update(k, v) {}
+
+    attachListeners() {
+        var tableRoot = this.table.getTablePath() + "/" + this.key;
+        this._valTable = ntcore.getTable(tableRoot);
+        var self = this;
+        this._mainListener = function (k, v) {
+            self.update();
+        };
+        this._valTable.onChange("Names", this._mainListener);
+        this._valTable.onChange("Ids", this._mainListener);
+        this._valTable.onChange("Cancel", this._mainListener);
+    }
+
+    update() {
+        this.renderCommands();
+    }
+}
+
+SmartDashboard.registerWidget(Scheduler, "object", {objectDetect: ["Names", "Ids"]});

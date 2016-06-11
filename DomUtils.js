@@ -485,6 +485,14 @@ class DomUtils {
     static hideTooltip(){
         document.querySelector(".tooltip").classList.remove("active");
     }
+    
+    static createIcon(cls){
+        var icon = document.createElement("i");
+        icon.classList.add("fa");
+        icon.classList.add("fa-" + cls);
+        icon.setAttribute("aria-hidden", "true");
+        return icon;
+    }
 }
 
 global.DomUtils = DomUtils;

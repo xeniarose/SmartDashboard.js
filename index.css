@@ -934,3 +934,18 @@ body.vfx-allowed .tooltip {
 .tooltip.active {
     opacity: 1;
 }
+
+.widget.widget-Scheduler .scheduler-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.widget.widget-Scheduler .scheduler-container .running-commands {
+    flex: 1;
+    overflow: auto;
+}
+
+.widget.widget-Scheduler .scheduler-container .cancel {
+    min-height: 1.5em;
+}
