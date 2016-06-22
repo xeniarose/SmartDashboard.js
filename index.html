@@ -17,7 +17,7 @@
     <div id="dashboard">
         
     </div>
-    <span class="widget-update">Click out or ENTER to update</span>
+    <span class="widget-update">Click out or [F10] to update</span>
     <div class="tooltip"></div>
     <img class="widget-drag-image" />
     <div class="widget-trash">
@@ -28,9 +28,24 @@
         <div class="profile-container">
             <button class="profile-button" id="open-profile">Select</button> Layout:&nbsp;<span class="current-profile">default</span>
         </div>
-        <h3>Variables <input type="text" id="entry-search" list="entry-search-items" placeholder="Search or create" /></h3>
-        <ul class="list">
-        </ul>
+        <h3>
+            <div class="tab active" data-group="entries" data-tab="vars" data-tooltip="Variables">
+                <i class="svg-lazy can-invert" data-file="variables.svg" aria-hidden="true"></i>
+            </div>
+            <div class="tab" data-group="entries" data-tab="new" data-tooltip="Widgets">
+                <i class="fa fa-file-o" aria-hidden="true"></i>
+            </div>
+            <input type="text" id="entry-search" list="entry-search-items" placeholder="Search or create" />
+        </h3>
+        <div class="tab-container">
+            <div class="tab-content active" data-group="entries" data-tab="vars">
+                <ul class="list">
+                </ul>
+            </div>
+            <div class="tab-content widgets-view" data-group="entries" data-tab="new">
+                
+            </div>
+        </div>
         <datalist id="entry-search-items"></datalist>
         <div id="controls">
             <button class="control" id="control-about" title="About">

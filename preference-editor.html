@@ -88,15 +88,29 @@
         </div>
         
         <div class="align-bottom text-right button-pane">
+            Click out or [F10] to update
             <button type="button" id="close">Close</button>
         </div>
     </form>
     <script>
         var gui = require("nw.gui");
         
+        if(location.hash == "#in-frame") {
+            document.querySelector(".dialog-header").style.display = "none";
+            document.querySelector(".button-pane").style.display = "none";
+        }
+        
         document.querySelector("#close").onclick = function(){
             window.close();
         }
+        
+        document.onkeyup = function(e){
+            if(e.which == 121){ // F10
+                try {
+                    document.querySelector(":focus").blur();
+                } catch(e) {} // querySelector() returns null
+            }
+        };
         
         function update(key, value){
             global.SmartDashboard.setPreference(key, value);
@@ -122,7 +136,9 @@
             }
             inp.onchange = (function(name){
                 return function(e){
-                    var val = (type == "checkbox") ? e.target.checked : e.target.value;
+                    var val =
+                        (type == "checkbox") ? e.target.checked :
+                            (type == "number") ? parseFloat(e.target.value) : e.target.value;
                     update(name, val);
                 };
             })(name);

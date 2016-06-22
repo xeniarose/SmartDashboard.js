@@ -123,11 +123,28 @@ body.vfx-allowed #entries {
     list-style-type: none;
 }
 
-#entries>ul {
+#entries .tab-container {
     padding: 0;
     flex: 1;
-    overflow: auto;
+    overflow: hidden;
     margin: 0;
+    margin-right: 20px;
+    position: relative;
+}
+
+#entries .tab-content {
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+}
+
+#entries .tab-container .tab-content {
+    width: 100%;
+}
+
+.list {
+    margin-left: 0;
+    padding-left: 0;
 }
 
 #entries .entry-add {
@@ -171,6 +188,9 @@ body.vfx-allowed #entries .list ul {
     flex: 1;
     margin-left: 1em;
     padding-left: 0.5em;
+    height: 1.5em;
+    align-self: flex-end;
+    min-width: 0px;
 }
 
 #entries .list li:not(.none)>.entry-add {
@@ -181,6 +201,29 @@ body.vfx-allowed #entries .list ul {
 #entries .list li.open>ul {
     max-height: 1500px;
     opacity: 1;
+}
+
+#entries .widget-entry {
+    display: inline-block;
+    width: 100px;
+    height: 100px;
+    padding-bottom: 0;
+    margin: 2px;
+    background-size: cover;
+    position: relative;
+}
+
+#entries .widget-entry span {
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    white-space: pre;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+    color: white;
 }
 
 #controls {
@@ -904,6 +947,7 @@ body.vfx-allowed .widget-trash {
     opacity: 0;
     pointer-events: none;
     padding: 5px;
+    z-index: 999999;
 }
 
 .tooltip::after {
@@ -917,14 +961,23 @@ body.vfx-allowed .widget-trash {
     border-bottom: 8px solid transparent;
 }
 
-.tooltip.caret-left::after {
+.tooltip[data-caret=left]::after {
     left: -8px;
     border-right: 8px solid rgba(0, 0, 0, 0.6);
 }
 
-.tooltip.caret-right::after {
+.tooltip[data-caret=right]::after {
     right: -8px;
     border-left: 8px solid rgba(0, 0, 0, 0.6);
+}
+
+.tooltip[data-caret=top-left]::after {
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 8px solid rgba(0, 0, 0, 0.5);
+    border-top: none;
+    left: 10px;
+    top: -8px;
 }
 
 body.vfx-allowed .tooltip {
@@ -948,4 +1001,89 @@ body.vfx-allowed .tooltip {
 
 .widget.widget-Scheduler .scheduler-container .cancel {
     min-height: 1.5em;
+}
+
+.svg-lazy {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+}
+
+.svg-lazy svg {
+    width: 1em;
+    height: 1em;
+    vertical-align: middle;
+}
+
+.tab {
+    border: 1px solid black;
+    border-bottom: 0;
+    border-top-left-radius: 0.5em;
+    border-top-right-radius: 0.5em;
+    padding: 0.2em;
+    margin-right: 0.2em;
+    text-align: center;
+    position: relative;
+    top: 1px;
+}
+
+.tab.active {
+    background: #ddd;
+}
+
+.tab-content {
+    position: absolute;
+    top: 0px;
+    left: 0%;
+}
+
+body.vfx-allowed .tab-content {
+    transition: opacity 0.3s, left 0.3s;
+}
+
+.tab-content:not(.active).before {
+    left: -100%;
+}
+
+.tab-content:not(.active){
+    pointer-events: none;
+    opacity: 0;
+    left: 100%;
+}
+
+.widget-entry-header {
+    margin-top: 0.3em;
+    margin-bottom: 0.3em;
+}
+
+#entries .tab {
+    width: 25px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+#entries .tab span {
+    cursor: default;
+}
+
+#entries .tab i {
+    width: 25px;
+}
+
+#entries .tab .tab-label {
+    opacity: 0;
+}
+
+.no-entries {
+    height: 100%;
+    padding-top: 100px;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    margin: 0;
+}
+
+.preferences-frame {
+    flex: 1;
+    border: 0;
 }

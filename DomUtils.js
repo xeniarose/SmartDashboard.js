@@ -67,20 +67,33 @@ class DomUtils {
         var datalist = document.querySelector("#entry-search-items");
         datalist.innerHTML = "";
         var entriesRaw = ntcore.getAllEntries();
-        entriesRaw.sort();
-        entriesRaw.forEach(function(el){
+        var entriesProcessed = new Set();
+        for(var i = 0; i < entriesRaw.length; i++){
+            var parts = entriesRaw[i].substring(1).split("/"); // remove leading slash, which screws up type detection
+            for(var j = 0; j < parts.length; j++){
+                var build = parts.slice(0, j + 1).join("/");
+                entriesProcessed.add(build);
+            }
+        }
+        entriesProcessed = Array.from(entriesProcessed);
+        entriesProcessed.sort();
+        entriesProcessed.forEach(function(el){
             var opt = document.createElement("option");
-            opt.value = el.substring(1); // remove leading slash, which screws up type detection
+            opt.value = el;
             datalist.appendChild(opt);
         });
         SmartDashboard._entries = entries;
         var root = document.querySelector("#entries .list");
         root.innerHTML = "";
         
+        var variablesExist = false;
+        
         function render(domRoot, dataRoot, items, pathBuild){
             for(var key of items){
                 var parentPath = pathBuild;
                 if(pathBuild.length > 0) parentPath += "/";
+                
+                variablesExist = true;
                 
                 var el = document.createElement("li");
                 var a = document.createElement("a");
@@ -182,7 +195,13 @@ class DomUtils {
             if(entries.hasOwnProperty(key))
                 items.push(key);
         items.sort();
+        root.classList.remove("no-entries");
         render(root, entries, items, "");
+        
+        if(!variablesExist){
+            root.innerHTML = "(No variables)";
+            root.classList.add("no-entries");
+        }
     }
     
     static inlineStyles(el){
@@ -235,9 +254,11 @@ class DomUtils {
     }
     
     static registerDocumentEventHandlers(){
-        document.querySelector("#entries").onmouseover = DomUtils.renderVariableEntries;
+        document.querySelector("#entries").onmouseover = function(){
+            DomUtils.renderVariableEntries();
+        };
         document.querySelector("#entry-search").onkeyup = function(e){
-            if(e.which != 13) return;
+            if(e.which != 13 && e.which != 121) return;
             
             var nameRaw = this.value;
             if(nameRaw.trim() == "") return;
@@ -336,6 +357,12 @@ class DomUtils {
                 e.preventDefault();
                 return false;
             }
+            
+            if(e.which == 121){ // F10
+                try {
+                    document.querySelector(":focus").blur();
+                } catch(e) {} // querySelector() returns null
+            }
         };
         
         document.querySelector("#open-profile").onclick = function(e){
@@ -393,6 +420,99 @@ class DomUtils {
             this.onclick(e);
             e.preventDefault();
             return false;
+        }
+        
+        Array.from(document.querySelectorAll(".tab")).forEach(function(el){
+            el.onclick = function(){
+                var tab = document.querySelector(".tab-content[data-group=" + el.dataset.group + "][data-tab=" + el.dataset.tab + "]");
+                Array.from(document.querySelectorAll(".tab[data-group=" + el.dataset.group + "]")).forEach(function(el2){
+                    el2.classList.remove("active");
+                });
+                
+                var allContent = document.querySelectorAll(".tab-content[data-group=" + el.dataset.group + "]");
+                for(var i = 0, found = false; i < allContent.length; i++){
+                    allContent[i].classList.remove("active");
+                    if(!found){
+                        allContent[i].classList.add("before");
+                        if(allContent[i] == tab)
+                            found = true;
+                    } else {
+                        allContent[i].classList.remove("before");
+                    }
+                }
+                
+                el.classList.add("active");
+                tab.classList.add("active");
+            };
+            
+            el.onmouseover = function(){
+                var rect = this.getBoundingClientRect();
+                DomUtils.showTooltip(this.dataset.tooltip, rect.left, rect.top + rect.height + 10, "top-left");
+            };
+            
+            el.onmouseout = function(){
+                DomUtils.hideTooltip();
+            };
+        })
+    }
+    
+    static renderWidgetsTab() {
+        var categorized = {
+            widget: {},
+            container: {},
+            unlinked: {}
+        };
+        for(var widgetName in SmartDashboard.widgetTypes){
+            var widgetType = SmartDashboard.widgetTypes[widgetName];
+            
+            try {
+                if(widgetType.data.display.hidden){
+                    continue;
+                }
+            } catch(e) {}
+            
+            var proto = widgetType.widget.prototype;
+            var category = proto instanceof UnlinkedWidget ? "unlinked" : proto instanceof Container || proto == Container.prototype ? "container" : "widget";
+            categorized[category][widgetName] = widgetType;
+        }
+        
+        var categories = {
+            widget: "Data",
+            container: "Grouping",
+            unlinked: "Other"
+        };
+        var icons = {
+            widget: "table",
+            container: "object-group",
+            unlinked: "files-o"
+        };
+        var container = document.querySelector("#entries .widgets-view");
+        container.innerHTML = "";
+        for(var category of ["widget", "container", "unlinked"]){
+            var header = document.createElement("h4");
+            header.classList.add("widget-entry-header");
+            header.appendChild(DomUtils.createIcon(icons[category]));
+            header.appendChild(document.createTextNode(" " + categories[category]));
+            container.appendChild(header);
+            
+            var widgetNames = Object.keys(categorized[category]);
+            widgetNames.sort();
+            for(var widgetName of widgetNames){
+                var entry = document.createElement("a");
+                entry.classList.add("widget-entry");
+                entry.dataset.type = widgetName;
+                entry.href = "widget:" + widgetName;
+                entry.style.backgroundImage = "url(assets/widgets/" + widgetName + ".png), url(assets/widgets/_blank_.png)";
+                var span = document.createElement("span");
+                span.textContent = widgetName;
+                entry.appendChild(span);
+                entry.title = widgetName;
+                entry.onclick = function(e){
+                    e.preventDefault();
+                    WidgetUtils.promptNewWidget(this.dataset.type);
+                };
+                container.appendChild(entry);
+            }
         }
     }
     
@@ -470,15 +590,15 @@ class DomUtils {
         document.querySelector(".widget-update").classList.remove("active");
     }
     
-    static showTooltip(content, x, y, caretLeft){
+    static showTooltip(content, x, y, caretClass){
         var t = document.querySelector(".tooltip");
         t.textContent = content;
-        t.style.top = (y - t.offsetHeight / 2) + "px";
+        t.style.top = ["left", "right"].indexOf(caretClass) > -1 ? (y - t.offsetHeight / 2) + "px" : y + "px";
         t.style.removeProperty("left");
         t.style.removeProperty("right");
-        t.style[caretLeft ? "left" : "right"] = x + "px";
+        t.style[caretClass == "right" ? "right" : "left"] = x + "px";
         
-        t.classList.add(caretLeft ? "caret-left" : "caret-right");
+        t.dataset.caret = caretClass;
         t.classList.add("active");
     }
     
@@ -492,6 +612,16 @@ class DomUtils {
         icon.classList.add("fa-" + cls);
         icon.setAttribute("aria-hidden", "true");
         return icon;
+    }
+    
+    static loadSvgIcons(){
+        var icons = Array.from(document.querySelectorAll(".svg-lazy"));
+        icons.forEach(function(el){
+            var contents = fs.readFileSync("assets/" + el.dataset.file);
+            var parser = new DOMParser();
+            var dom = parser.parseFromString(contents, "text/xml");
+            el.appendChild(dom.querySelector("svg"));
+        });
     }
 }
 

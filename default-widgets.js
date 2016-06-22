@@ -8,14 +8,21 @@ class ObjectDetector extends Widget {
         outer:
         for(var widgetTypeName in SmartDashboard.widgetTypes){
             var widgetType = SmartDashboard.widgetTypes[widgetTypeName];
-            if(widgetType.dataType == "object" && widgetType.data && widgetType.data.objectDetect){
-                for(var key of widgetType.data.objectDetect){
-                    if(typeof this.table.get(this.key + "/" + key) == "undefined"){
-                        continue outer;
+            if(widgetType.dataType == "object" && widgetType.data && (widgetType.data.objectDetect || widgetType.data.objectDetectName)){
+                if(widgetType.data.objectDetectName){
+                    if(widgetType.data.objectDetectName == this.key){
+                        this.replaceWith(widgetType.widget);
+                        return;
                     }
+                } else {
+                    for(var key of widgetType.data.objectDetect){
+                        if(typeof this.table.get(this.key + "/" + key) == "undefined"){
+                            continue outer;
+                        }
+                    }
+                    this.replaceWith(widgetType.widget);
+                    return;
                 }
-                this.replaceWith(widgetType.widget);
-                return;
             }
         }
         this._status.textContent = "Can't detect object type";
@@ -35,7 +42,7 @@ class ObjectDetector extends Widget {
         }
     }
 }
-SmartDashboard.registerWidget(ObjectDetector, "object");
+SmartDashboard.registerWidget(ObjectDetector, "object", {display: {hidden: true}});
 
 class NumberBox extends Widget {
     render() {
@@ -1166,3 +1173,24 @@ class Scheduler extends Widget {
 }
 
 SmartDashboard.registerWidget(Scheduler, "object", {objectDetect: ["Names", "Ids"]});
+
+class Preferences extends Widget {
+    render() {
+        if(this.key != "Preferences"){
+            this.remove();
+        }
+        this.view = document.createElement("iframe");
+        this.view.src = "preference-editor.html#in-frame";
+        this.view.classList.add("preferences-frame");
+        this.root.appendChild(this.view);
+    }
+    
+    _update(k, v) {}
+
+    attachListeners() {}
+
+    update() {}
+}
+
+// glitchy
+//SmartDashboard.registerWidget(Preferences, "object", {objectDetectName: "Preferences", preferredKey: "Preferences"});

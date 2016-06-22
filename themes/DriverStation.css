@@ -181,3 +181,17 @@ a {
 .widget.widget-USBCameraStream .stream, .widget.widget-MjpegStream .stream {
     text-shadow: 0px 0px 5px #ff1a1a;
 }
+
+.svg-lazy.can-invert>svg * {
+    fill: white;
+}
+
+.tab.active {
+    background: transparent;
+    color: #01D3FF;
+    border-bottom: 1px solid #464646;
+}
+
+.tab.active .svg-lazy.can-invert>svg * {
+    fill: #01D3FF;
+}

@@ -8,6 +8,9 @@ var SmartDashboard = {
     exitable: true
 };
 
+var pre = "font-family: 'Source Sans Pro';font-size:3em;border-bottom:";
+console.info('%cSmart%cDashboard%c.js%c ' + SmartDashboard.version, pre+"3px solid blue", pre+"3px solid orange", pre+"3px solid red", pre+"none");
+
 SmartDashboard.handleError = function(e, notSerious) {
     var msg;
     if (e.stack) {
@@ -321,6 +324,8 @@ SmartDashboard.init = function () {
     var cp = document.querySelector(".current-profile");
     cp.textContent = cp.title = SmartDashboard.options.profile;
     DomUtils.registerDocumentEventHandlers();
+    DomUtils.loadSvgIcons();
+    DomUtils.renderWidgetsTab();
 
     console.info("Loading plugins");
     try {

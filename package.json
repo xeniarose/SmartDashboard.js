@@ -21,7 +21,8 @@
     "height": 40,
     "position": "center",
     "transparent": false,
-    "show": false
+    "show": false,
+    "resizable": false
   },
   "js-flags": "--expose-gc"
 }

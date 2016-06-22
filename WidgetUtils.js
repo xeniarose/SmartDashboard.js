@@ -42,6 +42,13 @@ class WidgetUtils {
             || SmartDashboard.widgetTypes[widgetType].widget.prototype instanceof UnlinkedWidget;
         if(!isUnlinked){
             document.querySelector("#input-screen input").setAttribute("list", "entry-search-items");
+            
+            if(SmartDashboard.widgetTypes[widgetType].data && SmartDashboard.widgetTypes[widgetType].data.preferredKey){
+                WidgetUtils.newWidget(SmartDashboard.widgetTypes[widgetType].widget,
+                                     SmartDashboard.widgetTypes[widgetType].data.preferredKey);
+                return;
+            }
+            
             SmartDashboard.prompt("SmartDashboard variable:", function(nameRaw){
                 document.querySelector("#input-screen input").setAttribute("list", null);
                 if (nameRaw != null && nameRaw.trim() != ""){
@@ -100,7 +107,7 @@ class WidgetUtils {
             var trash = document.querySelector(".widget-trash");
             var rect = trash.getBoundingClientRect();
             if(e.clientX > rect.left && e.clientX < rect.right && e.clientY > rect.top && e.clientY < rect.bottom){
-                DomUtils.showTooltip("Drag widgets here to delete", rect.right + 10, rect.top + rect.height / 2, true);
+                DomUtils.showTooltip("Drag widgets here to delete", rect.right + 10, rect.top + rect.height / 2, "left");
             } else {
                 DomUtils.hideTooltip();
             }
