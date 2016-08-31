@@ -176,6 +176,21 @@ body.vfx-allowed #entries .list ul {
     box-sizing: border-box;
 }
 
+#entries .entry-icon {
+    font-style: normal;
+    display: inline-block;
+    margin-right: 0.2em;
+    margin-top: 0.2em;
+    color: gray;
+    border: 1px solid gray;
+    border-radius: 0.2em;
+    box-sizing: border-box;
+    width: 1em;
+    text-align: center;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
 #entries .list>li {
     padding-right: 20px;
 }

@@ -543,7 +543,7 @@ class Chooser extends Widget {
         this._select.value = this.valSelected;
     }
 }
-SmartDashboard.registerWidget(Chooser, "object", {objectDetect: ["options", "selected"]});
+SmartDashboard.registerWidget(Chooser, "object", {objectDetect: ["options"]});
 
 class MultilineInput extends Widget {
     render() {
@@ -868,6 +868,7 @@ class USBCameraStream extends UnlinkedWidget {
         this.saveData.port = this.saveData.port || 1180;
         this.saveData.resolution = this.saveData.resolution || "480x360";
         this.saveData.fps = this.saveData.fps || 30;
+        this.saveData.mode = this.saveData.mode || USBCameraStream.MODE.TCP;
         
         this.listenTimeout = setTimeout(this.listen.bind(this), 1);
     }
@@ -885,20 +886,43 @@ class USBCameraStream extends UnlinkedWidget {
         var self = this;
         function cb(k, v){
             self.saveData[k] = v;
-            if(self.sock){
-                self.sock.end();
-                self.sock.destroy();
-            }
+            self._img.src = "";
+            self._img.alt = "Settings changed, reconnecting";
+            try {
+                if(self.sock){
+                    self.sock.end();
+                    self.sock.destroy();
+                    self.sock = null;
+                }
+                if(self.ds && (k == "port" || k == "mode")) {
+                    self.ds.close();
+                    self.ds = null;
+                }
+                self.udpLastTime = 0; // make sure to resend the settings packet with new settings
+            } catch(e) {}
         }
         
+        var modes = Object.keys(USBCameraStream.MODE).map(e=>({display:e,value:USBCameraStream.MODE[e]}));
+        var resolutions = Object.keys(USBCameraStream.RESOLUTIONS);
+        win.addField({ value: "mode", display: "Mode" }, "select", self.saveData.mode, cb, modes);
         win.addField({ value: "port", display: "Port" }, "number", self.saveData.port, cb);
-        win.addField({ value: "resolution", display: "Resolution" }, "select", self.saveData.resolution, cb, ["640x480", "320x240", "160x120"]);
+        win.addField({ value: "resolution", display: "Resolution" }, "select", self.saveData.resolution, cb, resolutions);
         win.addField({ value: "fps", display: "FPS" }, "number", self.saveData.fps, cb);
     }
     
     destroy(){
-        if(this.sock) this.sock.destroy();
         this._destroyed = true;
+        try {
+            if(this.sock) {
+                this.sock.destroy();
+                this.sock = null;
+            }
+
+            if(this.ds) {
+                this.ds.close();
+                this.ds = null;
+            }
+        } catch(e) {}
     }
     
     connError(err){
@@ -910,21 +934,48 @@ class USBCameraStream extends UnlinkedWidget {
     }
     
     listen(){
-        if(this.sock) this.sock.destroy();
+        try {
+            if(this.sock) {
+                this.sock.destroy();
+                this.sock = null;
+            }
+            if(this.ds) {
+                this.ds.close();
+                this.ds = null;
+            }
+        } catch(e) {} // means it was already closed
+        
         if(this._destroyed) return;
-        this.sock = new net.Socket();
-        this.sock.on('data', this.onData.bind(this));
-        this.sock.on('end', this.connError.bind(this));
-        this.sock.on('close', this.connError.bind(this));
-        this.sock.on('error', this.connError.bind(this));
-        this.sock.on('connect', this.initStream.bind(this));
+        
+        if (parseInt(this.saveData.mode) == USBCameraStream.MODE.TCP) {
+            // MODE: TCP
+            this.sock = new net.Socket();
+            this.sock.on('data', this.onData.bind(this));
+            this.sock.on('end', this.connError.bind(this));
+            this.sock.on('close', this.connError.bind(this));
+            this.sock.on('error', this.connError.bind(this));
+            this.sock.on('connect', this.initStream.bind(this));
+            this.sock.connect(parseInt(this.saveData.port), SmartDashboard.options.ip);
+        } else {
+            // MODE: UDP
+            this.ds = dgram.createSocket({
+                type: "udp4",
+                reuseAddr: true
+            });
+            this.ds.on('listening', this.initStream.bind(this));
+            this.ds.on('message', this.onData.bind(this));
+            this.ds.on('close', this.connError.bind(this));
+            this.ds.on('error', this.connError.bind(this));
+            this.ds.bind(parseInt(this.saveData.port));
+            this.udpLastTime = 0;
+        }
+        
         this.state = USBCameraStream.STATE_READ_HEADER;
         this.headerOffset = 0;
         this.frameOffset = 0;
         this.frameHeader = new Buffer(8);
         this._img.src = "";
         this._img.alt = "Connecting";
-        this.sock.connect(parseInt(this.saveData.port), SmartDashboard.options.ip);
     }
     
     _writeInt(int){
@@ -936,22 +987,45 @@ class USBCameraStream extends UnlinkedWidget {
     }
     
     initStream(){
-        console.info("USBCameraStream: connected");
+        console.info("USBCameraStream: connected/listening");
         this._img.src = "";
-        this._img.alt = "Connected, waiting for stream";
-        // write header
-        this._writeInt(parseInt(this.saveData.fps));
-        this._writeInt(USBCameraStream.HW_COMPRESSION);
-        this._writeInt(USBCameraStream.RESOLUTIONS[this.saveData.resolution] || 0);
+        if (parseInt(this.saveData.mode) == USBCameraStream.MODE.TCP) {
+            this._img.alt = "Connected, waiting for stream";
+            // write header
+            this._writeInt(parseInt(this.saveData.fps));
+            this._writeInt(USBCameraStream.HW_COMPRESSION);
+            this._writeInt(USBCameraStream.RESOLUTIONS[this.saveData.resolution] || 0);
+        } else {
+            this._img.alt = "Waiting for stream";
+        }
     }
     
-    onData(data){
-        this.updateLoop(data);
+    onData(data, rinfo){
+        this.updateLoop(data, rinfo);
+    }
+    
+    udpSendSettings(addr, port) {
+        console.log("UDP: sending settings");
+        var len = 4 * 3;
+        var buf = new Buffer(len);
+        buf.writeInt32BE(parseInt(this.saveData.fps), 0);
+        buf.writeInt32BE(USBCameraStream.HW_COMPRESSION, 4);
+        buf.writeInt32BE(USBCameraStream.RESOLUTIONS[this.saveData.resolution] || 0, 8);
+        
+        this.ds.send(buf, 0, len, port, addr);
     }
     
     // repeatedly calls itself until data is consumed
     // switches between 2 states
-    updateLoop(data){
+    updateLoop(data, rinfo){
+        if (parseInt(this.saveData.mode) == USBCameraStream.MODE.UDP &&
+                this.udpLastTime < Date.now() - 10 * 1000) {
+            // we're not sure if this packet will get dropped or something bad will happen
+            // because it's UDP, so we just repeatedly send it to be sure
+            this.udpSendSettings(rinfo.address, rinfo.port);
+            this.udpLastTime = Date.now();
+        }
+        
         if(this.state == USBCameraStream.STATE_READ_HEADER){
             var numIters = Math.min(data.length, 8 - this.headerOffset);
             for(var i = 0; i < numIters; i++) {
@@ -961,8 +1035,17 @@ class USBCameraStream extends UnlinkedWidget {
             if(this.headerOffset >= 8){
                 if(this.frameHeader.slice(0, 4).compare(USBCameraStream.MAGIC_NUMBERS) !== 0){
                     console.warn("USBCameraStream: out of sync (didn't see magic numbers)");
-                    this.sock.end();
-                    this.sock.destroy();
+                    try {
+                        if (this.sock) {
+                            this.sock.end();
+                            this.sock.destroy();
+                            this.sock = null;
+                        }
+                        if(this.ds){
+                            this.ds.close();
+                            this.ds = null;
+                        }
+                    } catch(e) {}
                     return;
                 }
                 this.frameSize = this.frameHeader.readInt32BE(4);
@@ -979,8 +1062,17 @@ class USBCameraStream extends UnlinkedWidget {
             if(this.frameOffset >= this.frameSize){
                 var res = this.parseFrame(this.frame);
                 if(res !== true){
-                    this.sock.end();
-                    this.sock.destroy();
+                    try {
+                        if (this.sock) {
+                            this.sock.end();
+                            this.sock.destroy();
+                            this.sock = null;
+                        }
+                        if(this.ds){
+                            this.ds.close();
+                            this.ds = null;
+                        }
+                    } catch(e) {}
                     console.warn("USBCameraStream: ", res);
                     return;
                 }
@@ -1072,6 +1164,11 @@ USBCameraStream.RESOLUTIONS = {
 	"160x120": 2
 };
 USBCameraStream.HW_COMPRESSION = -1;
+USBCameraStream.MODE = {
+    "TCP": 0,
+    "UDP": 1
+};
+
 
 SmartDashboard.registerWidget(USBCameraStream, "unlinked");
 

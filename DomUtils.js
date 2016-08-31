@@ -97,6 +97,8 @@ class DomUtils {
                 
                 var el = document.createElement("li");
                 var a = document.createElement("a");
+                var icon = document.createElement("i");
+                icon.classList.add("entry-icon");
                 var btn = document.createElement("button");
                 btn.classList.add("entry-add");
                 btn.classList.add("fa");
@@ -104,10 +106,12 @@ class DomUtils {
                 a.textContent = key;
                 var nameRaw = parentPath + key;
                 var type = WidgetUtils.getTypeForEntry(nameRaw);
+                var typeLetter = type.substring(0,1).toUpperCase();
+                icon.textContent = typeLetter;
                 a.href = "nt:" + nameRaw;
                 a.dataset.path = nameRaw;
                 a.dataset.type = type;
-                a.setAttribute("title", nameRaw + "\n" + type.substring(0,1).toUpperCase() + type.substring(1));
+                a.setAttribute("title", nameRaw + "\n" + typeLetter + type.substring(1));
                 btn.onclick = function(){
                     if(this.parentElement.classList.contains("open")){
                         this.parentElement.classList.remove("open");
@@ -163,6 +167,7 @@ class DomUtils {
                     e.dataTransfer.setDragImage(img, 0, 0);
                 };
                 el.appendChild(btn);
+                el.appendChild(icon);
                 el.appendChild(a);
                 
                 if(pathBuild == "" && key == "Preferences"){
