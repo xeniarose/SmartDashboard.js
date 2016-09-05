@@ -17,8 +17,8 @@ class Container extends DraggableElement {
             }
         };
         this.key = "";
-        this.restoreSave();
         super._registerDom(this.dom);
+        this.restoreSave();
     }
     
     restoreSave(){

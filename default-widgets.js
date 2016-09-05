@@ -910,6 +910,17 @@ class USBCameraStream extends UnlinkedWidget {
         win.addField({ value: "fps", display: "FPS" }, "number", self.saveData.fps, cb);
     }
     
+    createContextMenu(menu){
+        var self = this;
+        menu.append(new gui.MenuItem({
+            label: "Reconnect",
+            click: function () {
+                clearTimeout(this.listenTimeout);
+                self.listen();
+            }
+        }));
+    }
+    
     destroy(){
         this._destroyed = true;
         try {
@@ -926,6 +937,7 @@ class USBCameraStream extends UnlinkedWidget {
     }
     
     connError(err){
+        // todo: catch when an error happens because the robot suddenly disconnects. Currently that's not happening and the client sits there, not trying to reconnect
         console.error("USBCameraStream: ", err);
         this._img.src = "";
         if(err && err.message) this._img.alt = "Stream error: " + err.message;

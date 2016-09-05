@@ -236,6 +236,7 @@ class DraggableElement {
                         } else {
                             this.style.height = (e.clientY - sy + oh + 5) + "px";
                         }
+                        self._sizeReset = false;
                         self._w = this.offsetWidth;
                         self._h = this.offsetHeight;
                     } else {
@@ -336,6 +337,7 @@ class DraggableElement {
         this.dom.style.width = this.dom.style.height = null;
         this._w = this.dom.offsetWidth;
         this._h = this.dom.offsetHeight;
+        this._sizeReset = true;
     }
     
     getPosition() {
