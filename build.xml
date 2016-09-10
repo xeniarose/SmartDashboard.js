@@ -48,17 +48,35 @@
                 <include name="Readme.md" />
             </fileset>
         </zip>
-        <move file="dist/app/nw.exe" tofile="dist/app/nw_.exe" />
-        <concat destfile="dist/app/nw.exe" binary="yes">
-            <fileset file="dist/app/nw_.exe" />
-            <fileset file="dist/app/SmartDashboard.nw" />
-        </concat>
-        <delete>
-            <fileset dir="dist/app">
-                <include name="nw_.exe" />
-                <include name="SmartDashboard.nw" />
-            </fileset>
-        </delete>
+        <if>
+            <available file="dist/app/nw.exe"/>
+            <then>
+                <move file="dist/app/nw.exe" tofile="dist/app/nw_.exe" />
+                <concat destfile="dist/app/nw.exe" binary="yes">
+                    <fileset file="dist/app/nw_.exe" />
+                    <fileset file="dist/app/SmartDashboard.nw" />
+                </concat>
+                <delete>
+                    <fileset dir="dist/app">
+                        <include name="nw_.exe" />
+                        <include name="SmartDashboard.nw" />
+                    </fileset>
+                </delete>
+            </then>
+            <else>
+                <move file="dist/app/nw" tofile="dist/app/nw_" />
+                <concat destfile="dist/app/nw" binary="yes">
+                    <fileset file="dist/app/nw_" />
+                    <fileset file="dist/app/SmartDashboard.nw" />
+                </concat>
+                <delete>
+                    <fileset dir="dist/app">
+                        <include name="nw_" />
+                        <include name="SmartDashboard.nw" />
+                    </fileset>
+                </delete>
+            </else>
+        </if>
     </target>
 
     <target name="sd.get-version">
