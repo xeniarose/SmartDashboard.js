@@ -32,7 +32,7 @@ With Driver Station:
 
 ## Building ##
 
-Currently the only builds are for Windows.
+Currently the only release builds are for Windows. To build it yourself for Windows or another target, follow these steps:
 
 - Download the version of [nw.js 0.14.1](http://nwjs.io/blog/v0.14.1/) for the target OS and architecture
 - [Build ntcore_node](https://github.com/erikuhlmann/ntcore_node#building) for nw.js (`--target-version=0.14.1`)
