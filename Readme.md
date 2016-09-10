@@ -34,8 +34,8 @@ With Driver Station:
 
 Currently the only release builds are for Windows. To build it yourself for Windows or another target, follow these steps:
 
-- Download the version of [nw.js 0.14.1](http://nwjs.io/blog/v0.14.1/) for the target OS and architecture
 - [Build ntcore_node](https://github.com/erikuhlmann/ntcore_node#building) for nw.js (`--target-version=0.14.1`)
 - Clone this repo and place `ntcore_node.node` in the root. (Replace the one that already exists for Windows x64)
+- Edit line 5 `build.xml` for your target OS and architecture (`linux-ia32`, `osx-x64`, etc)
 - `ant sd.package`
 - Locate built SmartDashboard.js in `dist/app`. Note: The `nw` executable is the entry point, and it can't be renamed due to an nw.js issue with native modules.
