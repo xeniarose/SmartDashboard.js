@@ -13,6 +13,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <atlstr.h>
 
 #include "miniz.c"
 
@@ -189,6 +190,16 @@ bool ExtractUpdate(){
     return true;
 }
 
+std::string ReplaceString(std::string subject, const std::string& search,
+                          const std::string& replace) {
+    size_t pos = 0;
+    while ((pos = subject.find(search, pos)) != std::string::npos) {
+         subject.replace(pos, search.length(), replace);
+         pos += replace.length();
+    }
+    return subject;
+}
+
 void SmartDashboardInit() {
     if(strstr(GetCommandLine(), "--update") != NULL) {        
         if(!ExtractUpdate()){
@@ -223,6 +234,33 @@ void SmartDashboardInit() {
     
     if(strstr(GetCommandLine(), "--ds-mode") != NULL){
         cmdLine += " --ds-mode";
+    }
+    
+    LPWSTR *szArglist;
+    int nArgs;
+    int i;
+
+    szArglist = CommandLineToArgvW(GetCommandLineW(), &nArgs);
+    if( NULL != szArglist && nArgs > 1) {
+        for( i=1; i<nArgs; i++) {
+            std::string arg = CW2A(szArglist[i]);
+            if(arg[0] != '-') {
+                DWORD  retval=0;
+                BOOL   success; 
+                TCHAR  buffer[FILENAME_MAX]=TEXT(""); 
+                TCHAR  buf[FILENAME_MAX]=TEXT(""); 
+                TCHAR** lppPart={NULL};
+                CAtlStringA narrowString(szArglist[i]);
+                retval = GetFullPathName(narrowString.GetBuffer(0),
+                     FILENAME_MAX,
+                     buffer,
+                     lppPart);
+                arg = ReplaceString(arg, "\"", "\"\"");
+                cmdLine += " --open-file=\"";
+                cmdLine += buffer;
+                cmdLine += '\"';
+            }
+        }
     }
     
     char* cmdLineChar = new char[cmdLine.length() + 1];

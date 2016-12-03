@@ -47,7 +47,8 @@
         var data = {
             sdver: gui.App.manifest.version,
             widgets: [],
-            options: {}
+            options: {},
+            recentFiles: []
         };
 
         try {
@@ -62,10 +63,6 @@
         }
 
         try {
-            var layouts = FileUtils.getDataLocations().layouts;
-            if (!fs.existsSync(layouts)) {
-                fs.mkdirSync(layouts);
-            }
             var plugins = FileUtils.getDataLocations().plugins;
             if (!fs.existsSync(plugins)) {
                 fs.mkdirSync(plugins);
@@ -77,6 +74,25 @@
 
             var contents = fs.readFileSync("themes/DriverStation.css");
             fs.writeFileSync(themes + "/DriverStation.css", contents);
+            
+            var copyRecursiveSync = function(src, dest) {
+                var exists = fs.existsSync(src);
+                var stats = exists && fs.statSync(src);
+                var isDirectory = exists && stats.isDirectory();
+                if (exists && isDirectory) {
+                    if(!fs.existsSync(dest))
+                        fs.mkdirSync(dest);
+                    fs.readdirSync(src).forEach(function(childItemName) {
+                        copyRecursiveSync(path.join(src, childItemName),
+                                          path.join(dest, childItemName));
+                    });
+                } else {
+                    var contents = fs.readFileSync(src);
+                    fs.writeFileSync(dest, contents);
+                }
+            };
+            
+            copyRecursiveSync("plugins/", plugins);
         } catch (e) {
             if (!confirm("SmartDashboard.js error: Failed to create data files\n" + e.stack + "\n\nContinue?")) {
                 gui.App.closeAllWindows();
@@ -101,10 +117,6 @@
         global.data = data;
 
         for (var arg of gui.App.argv) {
-            if (arg.startsWith("--layout=")) {
-                data.options.profile = arg.substring("--layout=".length);
-            }
-
             if (arg == "--ds-mode" && data.options.useDsModeSwitch) {
                 frame = false;
                 data.options.dsMode = true;

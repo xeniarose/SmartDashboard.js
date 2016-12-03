@@ -26,7 +26,7 @@
     <div id="entries">
         <div class="connection-status"> to Robot</div>
         <div class="profile-container">
-            <button class="profile-button" id="open-profile">Select</button> Layout:&nbsp;<span class="current-profile">default</span>
+            <button class="profile-button" id="open-profile">Layout</button>&nbsp;<span class="current-profile">default</span>
         </div>
         <h3>
             <div class="tab active" data-group="entries" data-tab="vars" data-tooltip="Variables">
@@ -105,6 +105,8 @@
             </div>
         </div>
     </div>
+    
+    <input style="display:none;" id="fileDialog" type="file" accept=".json,.sdj" />
     
     <script>
         const path = require("path");

@@ -8,7 +8,6 @@ class FileUtils {
         return {
             themes: dataPath + "/themes/",
             plugins: dataPath + "/plugins/",
-            layouts: dataPath + "/layouts/",
             save: dataPath + "/save.json",
             dsScript: dataPath + "\\ds.bat",
             frcdata: "C:\\Users\\Public\\Documents\\FRC"
@@ -19,7 +18,7 @@ class FileUtils {
         try {
             var normalizedPath = dir;
             fs.readdirSync(normalizedPath).forEach(function (file) {
-                cb(file);
+                cb(dir, file);
             });
         } catch (e) {
             SmartDashboard.handleError(e);
@@ -54,33 +53,6 @@ class FileUtils {
         } catch (e) {
             SmartDashboard.handleError(e);
         }
-    }
-    
-    static getLayouts(){
-        var profiles = [];
-        try {
-            FileUtils.forAllFilesInDirectory(FileUtils.getDataLocations().layouts, function (file) {
-                if(!file.endsWith(".json"))
-                    return;
-                profiles.push(file.substring(0, file.length - ".json".length));
-            });
-        } catch (e) {
-            SmartDashboard.handleError(e);
-        }
-        return profiles;
-    }
-    
-    static copyLayout(from, to){
-        try {
-            var lc = fs.readFileSync(FileUtils.getDataLocations().layouts + from + ".json");
-            fs.writeFileSync(FileUtils.getDataLocations().layouts + to + ".json", lc);
-        } catch(e){
-            SmartDashboard.handleError(e);
-        }
-    }
-    
-    static deleteLayout(name){
-        fs.unlinkSync(FileUtils.getDataLocations().layouts + name + ".json");
     }
 }
 

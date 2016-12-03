@@ -5,7 +5,9 @@ var SmartDashboard = {
     editable: false,
     options: {},
     plugins: [],
-    exitable: true
+    recentFiles: [],
+    exitable: true,
+    _iconMap: {}
 };
 
 var pre = "font-family: 'Source Sans Pro';font-size:3em;border-bottom:";
@@ -89,6 +91,20 @@ SmartDashboard.confirm = function(msg, cb){
         cb(v != null);
     }, null, true);
 };
+
+SmartDashboard.showFileDialog = function(type, cb) {
+    var fileDialog = document.querySelector("#fileDialog");
+    if(type == "save") {
+        fileDialog.setAttribute("nwsaveas", "layout.sdj");
+    } else {
+        fileDialog.removeAttribute("nwsaveas");
+    }
+    
+    fileDialog.onchange = function(evt) {
+        cb(fileDialog.value);
+    };
+    fileDialog.click();
+}
 
 SmartDashboard.registerWidget = function (widget, dataType, data) {
     SmartDashboard.widgetTypes[widget.name] = {
@@ -281,6 +297,7 @@ SmartDashboard.init = function () {
     };
     
     global.SmartDashboard = SmartDashboard;
+    global.ntcore = ntcore;
     process.on('uncaughtException', function (err) {
         global.SmartDashboard.handleError(err);
     });
@@ -288,6 +305,13 @@ SmartDashboard.init = function () {
     var data = global.data;
 
     SmartDashboard.options = data.options;
+    var recentFiles = data.recentFiles || [];
+    SmartDashboard.recentFiles = [];
+    for(var file of recentFiles) {
+        if(fs.existsSync(file)) {
+            SmartDashboard.recentFiles.push(file);
+        }
+    }
     SmartDashboard.window = gui.Window.get();
     
     if (!data.options.port) {
@@ -302,7 +326,7 @@ SmartDashboard.init = function () {
     }
     
     if(!data.options.profile){
-        data.options.profile = "default";
+        data.options.profile = null;
     }
     
     if(typeof data.options.doUpdateCheck == "undefined"){
@@ -321,47 +345,72 @@ SmartDashboard.init = function () {
         SmartDashboard.handleError(e);
     }
     
-    var cp = document.querySelector(".current-profile");
-    cp.textContent = cp.title = SmartDashboard.options.profile;
     DomUtils.registerDocumentEventHandlers();
     DomUtils.loadSvgIcons();
-    DomUtils.renderWidgetsTab();
 
     console.info("Loading plugins");
     try {
-        FileUtils.forAllFilesInDirectory(FileUtils.getDataLocations().plugins, function (file) {
-            console.info("Loading plugin", file);
+        function loadPlugin(basedir, dir) {
+            var fullPath = basedir + dir;
+            fullPath = fullPath.replace(/\\/g, '/');
+            
+            if(!fs.lstatSync(fullPath).isDirectory()) return;
+            
+            console.info("Loading plugin", dir);
             var plugin = {};
             try {
-                plugin = require(FileUtils.getDataLocations().plugins + file);
+                plugin = require(fullPath);
             } catch(e){
                 SmartDashboard.handleError(e);
                 plugin.info = {
-                    name: file,
+                    name: dir,
                     version: "Plugin error",
                     description: "" + e
                 };
             }
             plugin.info = plugin.info || {
-                name: file,
+                name: dir,
                 version: "Not available",
                 description: "Not available"
             };
-            plugin.info.file = file;
+            plugin.info.file = dir;
+            
+            if(plugin.assets) {
+                if(plugin.assets.css) {
+                    var link = document.createElement("link");
+                    link.rel = "stylesheet";
+                    link.href = "file:///" + fullPath + '/' + plugin.assets.css;
+                    document.head.appendChild(link);
+                }
+                if(plugin.assets.icons) {
+                    for(var key in plugin.assets.icons) {
+                        SmartDashboard._iconMap[key] = "file:///" + fullPath + '/' + plugin.assets.icons[key];
+                    }
+                }
+            }
+            
             SmartDashboard.plugins.push(plugin.info);
             console.log(plugin.info);
-        });
+        }
+        FileUtils.forAllFilesInDirectory(FileUtils.getDataLocations().plugins, loadPlugin);
     } catch (e) {
         SmartDashboard.handleError(e);
     }
     
+    DomUtils.renderWidgetsTab();
 
     console.info("Loading save, save.version=", data.sdver, "sd.version=", SmartDashboard.version);
     if (data.sdver != SmartDashboard.version) {
         console.warn("Save version doesn't match SmartDashboard version");
     }
     
-    SmartDashboard.loadWidgets();
+    var openProfile = _parseArgs(gui.App.argv);
+    if(openProfile) {
+        SmartDashboard.options.profile = openProfile;
+    }
+    
+    _prepareProfile();
+    _refreshWidgets();
     
     if(SmartDashboard.options.dsMode){
         var screen = gui.Screen.screens[0]; // DriverStation docks to primary screen only
@@ -394,10 +443,23 @@ SmartDashboard.init = function () {
     gui.App.on("open", (function(win, args){
         win.focus();
         
+        console.log("App open", args);
+        
+        var fileSwitch = /--open-file=".*?"/.exec(args);
+        if(Array.isArray(fileSwitch) && fileSwitch.length > 0) {
+            fileSwitch = fileSwitch[0];
+            var openProfile = _parseArgs([fileSwitch]);
+            if(openProfile) {
+                SmartDashboard.switchProfile(openProfile);
+                return;
+            }
+        }
+        
         if(args.indexOf("--ds-mode") > -1 && SmartDashboard.options.useDsModeSwitch){
             SmartDashboard.options.dsMode = true;
-            SmartDashboard.saveData();
-            SmartDashboard.restart();
+            SmartDashboard.saveData(function() {
+                SmartDashboard.restart();
+            });
         }
     }).bind(null, gui.Window.get()));
     
@@ -413,7 +475,7 @@ SmartDashboard.init = function () {
         }
     }
     
-    setInterval(checkConnection, 5000);
+    setInterval(checkConnection, 1000);
     setTimeout(checkConnection, 1000);
     
     createSdMenu();
@@ -423,7 +485,8 @@ SmartDashboard.init = function () {
     }
     
     setInterval(function(){
-        SmartDashboard.saveData();
+        if(SmartDashboard.options.profile)
+            SmartDashboard.saveData();
     }, 1000 * 60 * 5);
     
     setTimeout(function(){
@@ -442,15 +505,39 @@ SmartDashboard.init = function () {
     }
 }
 
+function _parseArgs(argv) {
+    for (var arg of argv) {
+        if(!arg.startsWith("--open-file=")) continue;
+        
+        arg = arg.replace("--open-file=", "");
+        arg = arg.trim();
+        var m = arg.match(/"(.*?)"/);
+        if(Array.isArray(m) && m.length >= 2) {
+            arg = m[1];
+        }
+        arg = arg.trim();
+        if(arg.length == 0) return null;
+        arg = path.resolve(path.dirname(path.dirname(process.execPath)), arg);
+        if(fs.existsSync(arg)) {
+            console.info("Opening", arg);
+            return arg;
+        } else {
+            console.warn(arg, "does not exist");
+            return null;
+        }
+    }
+}
+
 SmartDashboard.onExit = function(){
     if(!SmartDashboard.exitable){
         return;
     }
     SmartDashboard.confirm("Exit SmartDashboard.js?", function(v){
         if(v){
-            global.SmartDashboard.saveData();
-            gui.App.closeAllWindows();
-            gui.Window.get().close(true);
+            global.SmartDashboard.saveData(function() {
+                gui.App.closeAllWindows();
+                gui.Window.get().close(true);
+            });
         }
     });
 };
@@ -459,7 +546,10 @@ SmartDashboard.loadWidgets = function(){
     SmartDashboard._loadFinished = false;
     var widgets = [];
     try {
-        widgets = JSON.parse(fs.readFileSync(FileUtils.getDataLocations().layouts + SmartDashboard.options.profile + ".json").toString());
+        var filename = SmartDashboard.options.profile;
+        if(filename) {
+            widgets = JSON.parse(fs.readFileSync(filename).toString());
+        }
     } catch (e) {
         SmartDashboard.handleError(e, true);
     }
@@ -486,14 +576,15 @@ SmartDashboard.loadWidgets = function(){
         document.querySelector("#update-screen h3 .status").textContent = "Loading widgets";
         document.querySelector("#update-screen .update-info").textContent = "";
         document.querySelector("#update-screen .dl-info").textContent = "";
-        DomUtils.openBlurredDialog("#update-screen");
     }
     
     var progress = document.querySelector("#update-screen progress");
+    progress.value = 0;
     var status = document.querySelector("#update-screen .dl-info");
+    status.textContent = "Loading...";
     
-    function next(){
-        if(i >= widgets.length || profile!= SmartDashboard.options.profile){
+    function next(i, widgets, progress, status) {
+        if(i >= widgets.length || profile != SmartDashboard.options.profile) {
             document.querySelector("#update-screen").classList.remove("active");
             document.querySelector(".dialog-bg").classList.remove("active");
             if(i >= widgets.length){
@@ -513,20 +604,41 @@ SmartDashboard.loadWidgets = function(){
             loadWidget(wData);
         }
         i++;
-        setTimeout(next.bind(this), 20);
+        setTimeout(next.bind(this, i, widgets, progress, status, 100), 1);
     }
     
-    next();
+    if(widgets.length > 20) {
+        DomUtils.openBlurredDialog("#update-screen", function() {
+            next(i, widgets, progress, status);
+        });
+    } else {
+        next(i, widgets, progress, status);
+    }
 }
 
-SmartDashboard.saveData = function() {
+SmartDashboard.saveData = function(cb) {
     console.log("Saving data");
+    if(!SmartDashboard.options.profile) {
+        SmartDashboard.confirm("Save layout?", function(v) {
+            if(!v) {
+                if(cb) cb();
+                return;
+            }
+            SmartDashboard.showFileDialog("save", function(file) {
+                SmartDashboard.options.profile = file;
+                _prepareProfile();
+                SmartDashboard.saveData(cb);
+            });
+        });
+        return;
+    }
     try {
         var data = {
             sdver: SmartDashboard.version
         };
         
         data.options = SmartDashboard.options;
+        data.recentFiles = SmartDashboard.recentFiles;
         data = JSON.stringify(data);
         fs.writeFileSync(FileUtils.getDataLocations().save, data);
         
@@ -562,7 +674,9 @@ SmartDashboard.saveData = function() {
             saveWidget(widget, widgets);
         }
 
-        fs.writeFileSync(FileUtils.getDataLocations().layouts + SmartDashboard.options.profile + ".json", JSON.stringify(widgets));
+        var filename = SmartDashboard.options.profile;
+        fs.writeFileSync(filename, JSON.stringify(widgets));
+        if(cb) cb();
     } catch (e) {
         SmartDashboard.handleError(e);
     }
@@ -572,18 +686,45 @@ SmartDashboard.switchProfile = function(newProfile, forceNoSave){
     if(newProfile == SmartDashboard.options.profile){
         return;
     }
-    if(!forceNoSave) {
-        SmartDashboard.saveData();
-    }
-    SmartDashboard.options.profile = newProfile;
     
+    function next() {
+        SmartDashboard.options.profile = newProfile;
+    
+        _prepareProfile();
+        _refreshWidgets();
+    }
+    
+    if(!forceNoSave) {
+        SmartDashboard.saveData(next);
+    } else {
+        next();
+    }
+}
+
+function _prepareProfile() {
+    var cp = document.querySelector(".current-profile");
+    
+    if(!SmartDashboard.options.profile) {
+        cp.textContent = cp.title = "";
+        return;
+    }
+    var index;
+    if((index = SmartDashboard.recentFiles.indexOf(SmartDashboard.options.profile)) > -1) {
+        SmartDashboard.recentFiles.splice(index, 1);
+    }
+    SmartDashboard.recentFiles.splice(0, 0, SmartDashboard.options.profile);
+    if(SmartDashboard.recentFiles.length > 10) {
+        SmartDashboard.recentFiles = SmartDashboard.recentFiles.slice(0, 10);
+    }
+    
+    cp.textContent = cp.title = SmartDashboard.options.profile;
+}
+
+function _refreshWidgets() {
     while(SmartDashboard.widgets.length > 0){
         SmartDashboard.removeWidget(SmartDashboard.widgets[0]);
     }
-    
     SmartDashboard.loadWidgets();
-    var cp = document.querySelector(".current-profile");
-    cp.textContent = cp.title = newProfile;
 }
 
 SmartDashboard.setEditable = function (flag) {

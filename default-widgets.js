@@ -433,6 +433,11 @@ class RedGreen extends Checkbox {
 SmartDashboard.registerWidget(RedGreen, "boolean");
 
 class ArrayView extends Widget {
+    onNew() {
+        this._w = this._h = 300;
+        this.dom.style.width = this.dom.style.height = "300px";
+    }
+    
     render() {
         var sel = document.createElement("select");
         sel.classList.add("widget-array-type-selector");
@@ -509,6 +514,9 @@ class Chooser extends Widget {
         this._mainListener = function (k, v) {
             if (k == "options") {
                 self.val = v;
+                if(self.saveData.clientOverride && self.valSelected != ""){
+                    self._valTable.put("selected", self.valSelected);
+                }
             } else if (k == "selected") {
                 if(self.saveData.clientOverride && self.valSelected != ""){
                     self._valTable.put("selected", self.valSelected);
@@ -980,6 +988,8 @@ class USBCameraStream extends UnlinkedWidget {
             this.ds.on('error', this.connError.bind(this));
             this.ds.bind(parseInt(this.saveData.port));
             this.udpLastTime = 0;
+            this.frameCounter = 0;
+            this.byteCounter = 0;
         }
         
         this.state = USBCameraStream.STATE_READ_HEADER;
@@ -1009,10 +1019,22 @@ class USBCameraStream extends UnlinkedWidget {
             this._writeInt(USBCameraStream.RESOLUTIONS[this.saveData.resolution] || 0);
         } else {
             this._img.alt = "Waiting for stream";
+            this.ds.setBroadcast(true);
         }
     }
     
-    onData(data, rinfo){
+    onData(data, rinfo) {
+        if (parseInt(this.saveData.mode) == USBCameraStream.MODE.UDP &&
+                this.udpLastTime < Date.now() - 10 * 1000) {
+            console.log("FPS", this.frameCounter / 10);
+            console.log("BPS", this.byteCounter / 10);
+            this.frameCounter = 0;
+            this.byteCounter = 0;
+        }
+        
+        this.frameCounter++;
+        this.byteCounter += data.length;
+        
         this.updateLoop(data, rinfo);
     }
     
@@ -1282,6 +1304,123 @@ class Scheduler extends Widget {
 }
 
 SmartDashboard.registerWidget(Scheduler, "object", {objectDetect: ["Names", "Ids"]});
+
+class RobotCodeLog extends UnlinkedWidget {
+    render(){
+        this._text = document.createElement("textarea");
+        this._text.setAttribute("readonly", "true");
+        this._text.style.width = '100%';
+        this._text.style.height = '100%';
+        this._text.style.resize = 'none';
+        this.dom.appendChild(this._text);
+        
+        this._destroyed = false;
+        
+        this.reconnect(1);
+    }
+    
+    reconnect(ms) {
+        clearTimeout(this._timeout);
+        this._timeout = setTimeout(this.connect.bind(this), ms);
+    }
+    
+    close() {
+        if(this.conn) {
+            this.conn.end();
+            this.conn = null;
+        }
+    }
+    
+    connect() {
+        this.close();
+        if(this._destroyed) return;
+        
+        var self = this;
+        var Client = require('ssh2').Client;
+        this.conn = new Client();
+        self._text.value = "Connecting...";
+        
+        this.conn.on('ready', function() {
+            console.log('RobotCodeLog connected');
+            self._text.value += "\nConnected to robot";
+            self.conn.exec('tail --retry -f /home/lvuser/FRCUserProgram.log', function(err, stream) {
+                if (err) {
+                    self._text.value += "\nSSH error";
+                    console.error('RobotCodeLog error', err);
+                    
+                    self.close();
+                    self.reconnect(5000);
+                    return;
+                }
+                stream.on('close', function(code, signal) {
+                    console.log('RobotCodeLog close code=' + code + ', signal=' + signal);
+                    
+                    self.close();
+                    self.reconnect(5000);
+                }).on('data', function(data) {
+                    self._text.value += data;
+                }).stderr.on('data', function(data) {
+                    self._text.value += data;
+                });
+              });
+        }).on('error', function(err) {
+            self._text.value += "\nSSH error";
+            console.error('RobotCodeLog error', err);
+           
+            self.close();
+            self.reconnect(5000);
+        }).connect({
+          host: SmartDashboard.options.ip,
+          port: RobotCodeLog.SSH_PORT,
+          username: RobotCodeLog.SSH_USER,
+          password: RobotCodeLog.SSH_PASS
+        });
+    }
+    
+    destroy() {
+        this._destroyed = true;
+        this.close();
+    }
+    
+    chooseFile() {
+        var self = this;
+        var chooser = document.createElement("input");
+        chooser.type = "file";
+        chooser.setAttribute("nwsaveas", "");
+        chooser.accept = ".log";
+        chooser.addEventListener("change", function(evt) {
+            try {
+                fs.writeFileSync(this.value, self._text.value);
+                gui.Shell.openItem(this.value);
+            } catch(e){
+                SmartDashboard.handleError(e);
+            }
+        }, false);
+        chooser.style.display = "none";
+        chooser.click();
+    }
+    
+    createContextMenu(menu) {
+        var self = this;
+        menu.append(new gui.MenuItem({
+            label: "Export Log",
+            click: function () {
+                self.chooseFile();
+            }
+        }));
+        menu.append(new gui.MenuItem({
+            label: "Reconnect",
+            click: function () {
+                self.close();
+                self.reconnect(1);
+            }
+        }));
+    }
+}
+RobotCodeLog.SSH_PORT = 22;
+RobotCodeLog.SSH_USER = 'admin';
+RobotCodeLog.SSH_PASS = '';
+SmartDashboard.registerWidget(RobotCodeLog, "unlinked");
 
 class Preferences extends Widget {
     render() {

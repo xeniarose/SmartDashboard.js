@@ -13,3 +13,5 @@ dist/
 *.obj
 screenshots/
 node_modules/
+test/server/
+test/layouts/

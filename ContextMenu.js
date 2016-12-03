@@ -46,8 +46,9 @@ ContextMenu.defs = {
         {
             label: "Restart",
             click: function(){
-                SmartDashboard.saveData();
-                SmartDashboard.restart();
+                SmartDashboard.saveData(function() {
+                    SmartDashboard.restart();
+                });
             }
         },
         {
@@ -73,64 +74,21 @@ ContextMenu.defs = {
         {
             label: "New Layout",
             click: function(){
-                SmartDashboard.prompt("Layout name:", function(name){
-                    if(name == null) return;
-                    name = name.replace(/[<>:"\/\\\|\?\*]/g, "").trim();
-                    if(name == "") return;
-                    SmartDashboard.switchProfile(name);
+                SmartDashboard.switchProfile(null);
+            }
+        },
+        {
+            label: "Open Layout",
+            click: function(){
+                SmartDashboard.showFileDialog("open", function(file) {
+                    SmartDashboard.switchProfile(file);
                 });
             }
         },
         {
-            label: "Copy Current Layout",
+            label: "Save Layout",
             click: function(){
-                var layouts = FileUtils.getLayouts();
-                layouts.splice(layouts.indexOf(SmartDashboard.options.profile), 1);
-                SmartDashboard.prompt("Copy to:", "", function(name){
-                    if(name == null) return;
-                    name = name.replace(/[<>:"\/\\\|\?\*]/g, "").trim();
-                    if(name == "" || name == SmartDashboard.options.profile) return;
-                    
-                    function complete(){
-                        SmartDashboard.saveData();
-                        FileUtils.copyLayout(SmartDashboard.options.profile, name);
-                        SmartDashboard.switchProfile(name);
-                    }
-                    
-                    if(FileUtils.getLayouts().indexOf(name) > -1){
-                        SmartDashboard.confirm("Overwrite layout " + name + "?", function(res){
-                            if(res){
-                                complete();
-                            }
-                        });
-                    } else {
-                        complete();
-                    }
-                }, false, layouts);
-            }
-        },
-        {
-            label: "Delete Current Layout",
-            click: function(){
-                SmartDashboard.confirm("Delete layout " + SmartDashboard.options.profile + "?", function(res){
-                    if(!res){
-                        return;
-                    }
-                    
-                    while(SmartDashboard.widgets.length > 0){
-                        SmartDashboard.removeWidget(SmartDashboard.widgets[0]);
-                    }
-                    FileUtils.deleteLayout(SmartDashboard.options.profile);
-                    if(SmartDashboard.options.profile != "default"){
-                        SmartDashboard.switchProfile("default", true);
-                    }
-                });
-            }
-        },
-        {
-            label: "Open Layouts Folder",
-            click: function(){
-                gui.Shell.openExternal(FileUtils.getDataLocations().layouts);
+                SmartDashboard.saveData();
             }
         }
     ],
@@ -138,8 +96,9 @@ ContextMenu.defs = {
         {
             label: "Restart",
             click: function(){
-                SmartDashboard.saveData();
-                SmartDashboard.restart();
+                SmartDashboard.saveData(function() {
+                    SmartDashboard.restart();
+                });
             }
         },
         {

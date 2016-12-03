@@ -27,7 +27,7 @@ class DomUtils {
         opt.textContent = "Minimal";
         select.appendChild(opt);
         try {
-            FileUtils.forAllFilesInDirectory(FileUtils.getDataLocations().themes, function (file) {
+            FileUtils.forAllFilesInDirectory(FileUtils.getDataLocations().themes, function (dir, file) {
                 if(file.substring(file.length - 4) != ".css") return;
                 var theme = file.substring(file, file.length - 4);
                 var opt = document.createElement("option");
@@ -373,9 +373,9 @@ class DomUtils {
         document.querySelector("#open-profile").onclick = function(e){
             var menu = new gui.Menu();
             
-            var profiles = FileUtils.getLayouts();
+            var recentFiles = SmartDashboard.recentFiles;
             
-            var menuSpec = profiles.map(function(item){
+            var menuSpec = recentFiles.map(function(item){
                 return {
                     label: item,
                     click: (function(item){
@@ -507,7 +507,11 @@ class DomUtils {
                 entry.classList.add("widget-entry");
                 entry.dataset.type = widgetName;
                 entry.href = "widget:" + widgetName;
-                entry.style.backgroundImage = "url(assets/widgets/" + widgetName + ".png), url(assets/widgets/_blank_.png)";
+                var bgImage = "url(assets/widgets/" + widgetName + ".png), url(assets/widgets/_blank_.png)";
+                if(SmartDashboard._iconMap[widgetName]) {
+                    bgImage = "url(\"" + SmartDashboard._iconMap[widgetName] + "\"), url(assets/widgets/_blank_.png)";
+                }
+                entry.style.backgroundImage = bgImage;
                 var span = document.createElement("span");
                 span.textContent = widgetName;
                 entry.appendChild(span);
@@ -529,11 +533,12 @@ class DomUtils {
         return styleElement.sheet.cssRules;
     };
     
-    static openBlurredDialog(id){
+    static openBlurredDialog(id, cb) {
         var bg = document.querySelector(".dialog-bg-inner");
         function complete(){
             bg.parentElement.classList.add("active");
             document.querySelector(id).classList.add("active");
+            if(cb) setTimeout(cb, 500);
         }
         try {
             nw.Window.get().capturePage(function(res){

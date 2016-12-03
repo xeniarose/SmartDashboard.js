@@ -24,5 +24,8 @@
     "show": false,
     "resizable": false
   },
-  "js-flags": "--expose-gc"
+  "js-flags": "--expose-gc",
+  "dependencies": {
+    "ssh2": "^0.5.2"
+  }
 }

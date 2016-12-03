@@ -1,0 +1,66 @@
+.widget.widget-ColorRange .color-range-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.widget.widget-ColorRange section.color-slider {
+    position: relative;
+    width: 255px;
+    height: 64px;
+    text-align: center;
+}
+
+.widget.widget-ColorRange section {
+    background-image: url(assets/checkerboard.png);
+}
+
+.widget.widget-ColorRange section.color-slider:nth-of-type(1) canvas {
+    background:linear-gradient(to right, hsl(0, 100%, 50%) 0%,hsl(10, 100%, 50%) 2.7777777777777777%,hsl(20, 100%, 50%) 5.555555555555555%,hsl(30, 100%, 50%) 8.333333333333334%,hsl(40, 100%, 50%) 11.11111111111111%,hsl(50, 100%, 50%) 13.88888888888889%,hsl(60, 100%, 50%) 16.666666666666668%,hsl(70, 100%, 50%) 19.444444444444443%,hsl(80, 100%, 50%) 22.22222222222222%,hsl(90, 100%, 50%) 25%,hsl(100, 100%, 50%) 27.77777777777778%,hsl(110, 100%, 50%) 30.555555555555554%,hsl(120, 100%, 50%) 33.333333333333336%,hsl(130, 100%, 50%) 36.11111111111111%,hsl(140, 100%, 50%) 38.888888888888886%,hsl(150, 100%, 50%) 41.666666666666664%,hsl(160, 100%, 50%) 44.44444444444444%,hsl(170, 100%, 50%) 47.22222222222222%,hsl(180, 100%, 50%) 50%,hsl(190, 100%, 50%) 52.77777777777778%,hsl(200, 100%, 50%) 55.55555555555556%,hsl(210, 100%, 50%) 58.33333333333333%,hsl(220, 100%, 50%) 61.11111111111111%,hsl(230, 100%, 50%) 63.888888888888886%,hsl(240, 100%, 50%) 66.66666666666667%,hsl(250, 100%, 50%) 69.44444444444444%,hsl(260, 100%, 50%) 72.22222222222221%,hsl(270, 100%, 50%) 75%,hsl(280, 100%, 50%) 77.77777777777777%,hsl(290, 100%, 50%) 80.55555555555556%,hsl(300, 100%, 50%) 83.33333333333333%,hsl(310, 100%, 50%) 86.11111111111111%,hsl(320, 100%, 50%) 88.88888888888889%,hsl(330, 100%, 50%) 91.66666666666667%,hsl(340, 100%, 50%) 94.44444444444444%,hsl(350, 100%, 50%) 97.22222222222221%,hsl(360, 100%, 50%) 100%);
+}
+
+.widget.widget-ColorRange section.color-slider:nth-of-type(2) canvas {
+    background:linear-gradient(to right, white 0%, transparent 100%);
+}
+
+.widget.widget-ColorRange section.color-slider:nth-of-type(3) canvas {
+    background:linear-gradient(to right, black 0%, transparent 100%);
+}
+
+.widget.widget-ColorRange section.color-slider input {
+    pointer-events: none;
+    position: absolute;
+    overflow: hidden;
+    left: 0;
+    top: 0px;
+    width: 255px;
+    outline: none;
+    height: 64px;
+    margin: 0;
+    padding: 0;
+    -webkit-appearance: none;
+    background: transparent;
+}
+
+.widget.widget-ColorRange section.color-slider input::-webkit-slider-thumb {
+    pointer-events: all;
+    position: relative;
+    z-index: 1;
+    outline: 0;
+    width: 5px;
+    height: 64px;
+    display: block;
+    -webkit-appearance: none;
+    background: linear-gradient(
+       to right,
+       rgba(255, 255, 255, 0.2) 0%,
+       rgba(255, 255, 255, 0.2) 39%,
+       rgba(0, 0, 0, 1) 40%,
+       rgba(0, 0, 0, 1) 60%,
+       rgba(255, 255, 255, 0.2) 59%,
+       rgba(255, 255, 255, 0.2) 100%
+    );
+}
+
+.widget.widget-ColorRange section.color-slider canvas {
+    pointer-events: none;
+}
