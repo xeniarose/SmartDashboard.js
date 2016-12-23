@@ -126,11 +126,40 @@ class DomUtils {
                 a.onclick = function(e){
                     e.preventDefault();
                     var nameRaw = this.dataset.path;
-                    
                     var widgetType = this.dataset.type;
-                    
                     WidgetUtils.defaultNewWidget(widgetType, nameRaw);
                 };
+                a.oncontextmenu = function (ev) {
+                    ev.preventDefault();
+                    
+                    var menu = new gui.Menu();
+                    menu.append(new gui.MenuItem({
+                        label: "Add to dashboard",
+                        click: (function(){
+                            var nameRaw = this.dataset.path;
+                            var widgetType = this.dataset.type;
+                            WidgetUtils.defaultNewWidget(widgetType, nameRaw);
+                        }).bind(this)
+                    }));
+                    if(this.dataset.type != "object") {
+                        menu.append(new gui.MenuItem({
+                            label: "Delete",
+                            click: (function(){
+                                SmartDashboard.confirm("Delete " + nameRaw + "?", (function(v) {
+                                    if(!v) return;
+                                    
+                                    var nameRaw = this.dataset.path;
+                                    var table = nameRaw.substring(0, nameRaw.lastIndexOf("/"));
+                                    var varName = nameRaw.substring(nameRaw.lastIndexOf("/") + 1);
+                                    ntcore.getTable(table).remove(varName);
+                                }).bind(this))
+                            }).bind(this)
+                        }));
+                    }
+                    menu.popup(ev.x, ev.y);
+                    return false;
+                };
+        
                 a.ondragstart = function(e){
                     e.dataTransfer.clearData();
                     e.dataTransfer.setData("text/plain", this.dataset.path);

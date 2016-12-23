@@ -25,7 +25,7 @@ class ObjectDetector extends Widget {
                 }
             }
         }
-        this._status.textContent = "Can't detect object type";
+        this._status.textContent = "Can't detect object type. Use the morph menu";
         this.dom.classList.add("no-detect");
     }
     
