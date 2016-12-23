@@ -329,6 +329,10 @@ SmartDashboard.init = function () {
         data.options.profile = null;
     }
     
+    if(!data.options.serverMode) {
+        data.options.serverMode = false;
+    }
+    
     if(typeof data.options.doUpdateCheck == "undefined"){
         data.options.doUpdateCheck = true;
     }
@@ -340,7 +344,8 @@ SmartDashboard.init = function () {
             networkIdentity: "SmartDashboard.js " + SmartDashboard.version,
             port: parseInt(data.options.port)
         });
-        ntcore.init(ntcore.CLIENT, data.options.ip);
+        if(data.options.serverMode) ntcore.init(ntcore.SERVER);
+        else ntcore.init(ntcore.CLIENT, data.options.ip);
     } catch (e) {
         SmartDashboard.handleError(e);
     }

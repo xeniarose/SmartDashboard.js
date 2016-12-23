@@ -168,6 +168,12 @@
                     No plugins
                 </div>
             </fieldset>
+            
+            <fieldset id="advanced">
+                <legend><i class="fa fa-wrench" aria-hidden="true"></i> Advanced</legend>
+                <label><span><input type="checkbox" id="serverMode" class="setting restart-required" /></span> NT server mode</label>
+                <p class="caption">Runs a NetworkTables server instead of a client that connects to a robot. Useful for running coprocessors without a roboRIO.</p>
+            </fieldset>
         </div>
         <div class="button-pane">
             <button type="submit">Save</button>

@@ -1,6 +1,9 @@
 /**
  * This is a "plugin" because it's a client for something that doesn't exist in WPILib. It can also be an example for making plugins
  */
+ 
+ var ntcore = global.ntcore;
+ var SmartDashboard = global.SmartDashboard;
 
 class ColorRange extends Widget {
     render() {
