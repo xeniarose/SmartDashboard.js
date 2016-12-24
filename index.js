@@ -146,8 +146,9 @@ function createSdMenu() {
     }
 
     var sdMenu = ContextMenu.create("main", [
-        {item: 7, name: "submenu", value: newMenu},
-        {item: 8, name: "checked", value: SmartDashboard.editable}
+        {item: 7, name: "submenu", value: ContextMenu.createProfilesMenu()},
+        {item: 9, name: "submenu", value: newMenu},
+        {item: 10, name: "checked", value: SmartDashboard.editable}
     ]);
     return sdMenu;
 }
@@ -722,7 +723,8 @@ function _prepareProfile() {
         SmartDashboard.recentFiles = SmartDashboard.recentFiles.slice(0, 10);
     }
     
-    cp.textContent = cp.title = SmartDashboard.options.profile;
+    cp.title = SmartDashboard.options.profile;
+    cp.textContent = path.basename(SmartDashboard.options.profile);
 }
 
 function _refreshWidgets() {

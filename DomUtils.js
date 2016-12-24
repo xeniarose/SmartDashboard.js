@@ -400,20 +400,7 @@ class DomUtils {
         };
         
         document.querySelector("#open-profile").onclick = function(e){
-            var menu = new gui.Menu();
-            
-            var recentFiles = SmartDashboard.recentFiles;
-            
-            var menuSpec = recentFiles.map(function(item){
-                return {
-                    label: item,
-                    click: (function(item){
-                        SmartDashboard.switchProfile(item);
-                    }).bind(DomUtils, item)
-                };
-            }).concat(ContextMenu.defs.profiles);
-            
-            ContextMenu.create(menuSpec).popup(e.target.offsetLeft, e.target.offsetTop + e.target.offsetHeight);
+            ContextMenu.createProfilesMenu().popup(e.target.offsetLeft, e.target.offsetTop + e.target.offsetHeight);
         };
         
         document.querySelector("#error-screen button.restart").onclick = function(){

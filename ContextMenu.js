@@ -15,13 +15,33 @@ ContextMenu.append = function(menu, spec, params){
         } else {
             props = item;
         }
-        menu.append(new gui.MenuItem(props));
+        var menuItem = new gui.MenuItem(props);
+        if(props.submenu) {
+            
+        }
+        menu.append(menuItem);
     }
     return menu;
 }
 
 ContextMenu.create = function(spec, params){
     return ContextMenu.append(new gui.Menu(), spec, params);
+}
+
+ContextMenu.createProfilesMenu = function() {
+    var menu = new gui.Menu();
+    
+    var recentFiles = SmartDashboard.recentFiles;
+    
+    var menuSpec = recentFiles.map(function(item) {
+        return {
+            label: item,
+            click: (function(item){
+                SmartDashboard.switchProfile(item);
+            }).bind(DomUtils, item)
+        };
+    }).concat(ContextMenu.defs.profiles);
+    return ContextMenu.create(menuSpec);
 }
 
 ContextMenu.defs = {
@@ -56,6 +76,10 @@ ContextMenu.defs = {
             click: function(){
                 SmartDashboard.onExit();
             }
+        },
+        "---",
+        {
+            label: "Layout"
         },
         "---",
         {
