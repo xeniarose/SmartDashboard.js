@@ -27,5 +27,13 @@
   "js-flags": "--expose-gc",
   "dependencies": {
     "ssh2": "^0.5.2"
+  },
+  "webview": {
+     "partitions": [
+        {
+          "name": "trusted",
+          "accessible_resources": [ "<all_urls>" ]
+        }
+     ]
   }
 }

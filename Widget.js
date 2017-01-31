@@ -211,6 +211,7 @@ class Widget extends DraggableElement {
     }
 
     attachListeners() {
+		this._notOverridenAttachListeners = true;
         // get around the ntcore addon losing context on callbacks
         var self = this;
         this._mainListener = function (k, v) {
@@ -263,8 +264,15 @@ class Widget extends DraggableElement {
         this.root.textContent = this.key + ": " + this.val;
     }
     
-    destroy(){
-        
+	destroy() {
+		
+	}
+	
+    _destroy(){
+        if(this._notOverridenAttachListeners) {
+			this.table.offChange(this.key, this._mainListener);
+		}
+		this.destroy();
     }
 }
 global.Widget = Widget;

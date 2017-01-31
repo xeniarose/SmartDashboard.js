@@ -146,9 +146,9 @@ function createSdMenu() {
     }
 
     var sdMenu = ContextMenu.create("main", [
-        {item: 7, name: "submenu", value: ContextMenu.createProfilesMenu()},
-        {item: 9, name: "submenu", value: newMenu},
-        {item: 10, name: "checked", value: SmartDashboard.editable}
+        {item: 2, name: "submenu", value: ContextMenu.createProfilesMenu()},
+        {item: 1, name: "submenu", value: newMenu},
+        {item: 3, name: "checked", value: SmartDashboard.editable}
     ]);
     return sdMenu;
 }
@@ -624,6 +624,19 @@ SmartDashboard.loadWidgets = function(){
 
 SmartDashboard.saveData = function(cb) {
     console.log("Saving data");
+	    try {
+        var data = {
+            sdver: SmartDashboard.version
+        };
+        
+        data.options = SmartDashboard.options;
+        data.recentFiles = SmartDashboard.recentFiles;
+        data = JSON.stringify(data);
+        fs.writeFileSync(FileUtils.getDataLocations().save, data);
+    } catch (e) {
+        SmartDashboard.handleError(e);
+    }
+	
     if(!SmartDashboard.options.profile) {
         SmartDashboard.confirm("Save layout?", function(v) {
             if(!v) {
@@ -638,16 +651,8 @@ SmartDashboard.saveData = function(cb) {
         });
         return;
     }
-    try {
-        var data = {
-            sdver: SmartDashboard.version
-        };
-        
-        data.options = SmartDashboard.options;
-        data.recentFiles = SmartDashboard.recentFiles;
-        data = JSON.stringify(data);
-        fs.writeFileSync(FileUtils.getDataLocations().save, data);
-        
+	
+	try {
         if(!SmartDashboard._loadFinished) return;
         var widgets = [];
 
@@ -767,7 +772,7 @@ SmartDashboard.addWidget = function (widget) {
 
 SmartDashboard.removeWidget = function (widget) {
     WidgetUtils.onWidgetRemoved(widget);
-    widget.destroy();
+    widget._destroy();
     var index = this.widgets.indexOf(widget);
     if (index > -1) {
         this.widgets.splice(index, 1);

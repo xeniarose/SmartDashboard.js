@@ -122,12 +122,19 @@
                 <label><span><input type="radio" name="ds-toggle" class="ds-default-toggle toggle-on" /></span>SmartDashboard.js</label><br/>
                 <label><span><input type="radio" name="ds-toggle" class="ds-default-toggle toggle-off" /></span>LabVIEW Dashboard</label><br/>
                 <p class="caption">The default dashboard is what DriverStation launches when you choose "Default" in the dashboard selector. Close DriverStation before changing.</p>
-                <script>
-                    if(global.FileUtils.isDefaultDashboard()){
-                        document.querySelector(".ds-default-toggle.toggle-on").checked = true;
-                    } else {
-                        document.querySelector(".ds-default-toggle.toggle-off").checked = true;
-                    }
+                <p class="caption" id="frcDsError" style="color:red"></p>
+				<script>
+					if(global.FileUtils.dashboardFileExists()) {
+						if(global.FileUtils.isDefaultDashboard()){
+							document.querySelector(".ds-default-toggle.toggle-on").checked = true;
+						} else {
+							document.querySelector(".ds-default-toggle.toggle-off").checked = true;
+						}
+					} else {
+						document.querySelector(".ds-default-toggle.toggle-on").disabled = true;
+						document.querySelector(".ds-default-toggle.toggle-off").disabled = true;
+						document.querySelector("#frcDsError").textContent = "Couldn't find DriverStation configuration file";
+					}
                 </script>
             </fieldset>
          

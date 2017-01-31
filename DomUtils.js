@@ -559,7 +559,7 @@ class DomUtils {
         try {
             nw.Window.get().capturePage(function(res){
                 if(!bg.parentElement.classList.contains("active"))
-                    bg.style.background = "url(" + res + ")";
+                    bg.style.backgroundImage = "url(" + res + ")";
                 complete();
             });
         } catch(e){

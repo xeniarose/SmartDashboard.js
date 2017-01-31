@@ -71,91 +71,49 @@ SmartDashboard.registerWidget(NumberBox, "number");
 
 class Graph extends Widget {
     render() {
-        this.graph = document.createElement("div");
-        this.graph.classList.add("widget-graph");
-        this.root.appendChild(this.graph);
+		this._dataBuffer = [];
+		this._lastUpdateTime = 0;
+		
+		var div = document.createElement("div");
+		div.classList.add("widget-graph-div");
+		this.root.appendChild(div);
+		
+        this.webview = document.createElement("webview");
+		this.webview.setAttribute("partition", "trusted");
+		this.webview.setAttribute("src", "graph-frame.html");
+        this.webview.classList.add("widget-graph-webview");
+        div.appendChild(this.webview);
         
-        this.items = [];
-        
-        if(!this.saveData.maxNumPoints){
-            this.saveData.maxNumPoints = 100;
-        }
-
-        this.dataset = new vis.DataSet(this.items);
-        this.visOptions = {
-            start: vis.moment().add(-30, 'seconds'), // changed so its faster
-            end: vis.moment(),
-            drawPoints: {
-                style: 'circle' // square, circle
-            },
-            dataAxis: {
-                left: {
-                    format: function(e){
-                        return '' + e;
-                    }
-                }
-            },
-            //moveable: false,
-            //zoomable: true,
-            interpolation: false,
-            shaded: {
-                orientation: 'bottom' // top, bottom
-            }
-        };
-        var self = this;
-        this.graph2d = new vis.Graph2d(this.graph, this.dataset, this.visOptions);
-        setTimeout(function(){
-            self.mouseUpHandler();
-        }, 1000);
+		this._om = this.onMessage.bind(this);
+		window.addEventListener('message', this._om);
     }
-    
-    createPropertiesView(win){
-        var self = this;
-        this._propCb = function(k, v){
-            self.saveData.maxNumPoints = parseInt(v);
-        }
-        win.addField("Points to keep", "number", self.saveData.maxNumPoints || 100, this._propCb);
-    }
-    
-    setEditable(editable){
-        super.setEditable(editable);
-        this.mouseUpHandler();
-    }
-    
-    setPosition(x, y, w, h){
-        super.setPosition(x, y, w, h);
-        this.mouseUpHandler();
-    }
-    
-    mouseUpHandler(){
-        try {
-            this.graph2d.setOptions({height: '1px'});
-            this.graph2d.setOptions({height: this.graph.offsetHeight+'px'});
-        } catch(e){
-            console.error(e);
-        }
-    }
+	
+	sendMessage(msg) {
+		if(this.webview && this.webview.contentWindow && this.webview.contentWindow.postMessage)
+			this.webview.contentWindow.postMessage(msg, "*");
+	}
+	
+	onMessage(e) {
+		if (e.source != this.webview.contentWindow) return;
+		
+		//console.log(e.data);
+	}
+	
+	destroy() {
+		window.removeEventListener('message', this._om);
+	}
 
     update() {
-        var now = vis.moment();
-        var range = this.graph2d.getWindow();
-        var interval = range.end - range.start;
-        if (now > range.end) {
-            this.graph2d.setWindow(now - 0.1 * interval, now + 0.9 * interval);
-        }
-        
-        var now = vis.moment();
-        this.dataset.add({
-            x: now,
-            y: this.val
-        });
-        while(this.dataset.length > this.saveData.maxNumPoints && this.dataset.length > 0){
-            this.dataset.remove(this.dataset.get()[0].id);
-        }
-    }
-    
-    destroy(){
-        this.graph2d.destroy();
+		var now = new Date();
+        this._dataBuffer.push({
+			x: now,
+			y: this.val
+		});
+		var nowTime = now.getTime();
+		if(now - this._lastUpdateTime > 1000) {
+			this.sendMessage({type:"update",data:this._dataBuffer});
+			this._lastUpdateTime = new Date().getTime();
+		}
     }
     
     chooseFile() {
@@ -166,11 +124,11 @@ class Graph extends Widget {
         chooser.accept = ".csv";
         chooser.addEventListener("change", function(evt) {
             try {
-                var contents = "Unix Timestamp," + self.key + "\n";
-                for(var key in self.dataset._data){
-                    var item = self.dataset._data[key];
-                    contents += item.x.unix() + "," + item.y + "\n";
-                }
+                var contents = "Timestamp," + self.key + "\n";
+                var data = self._dataBuffer;
+				for(var i = 0; i < data.length; i++) {
+					contents += `${data[i].x.getTime()},${data[i].y}\n`;
+				}
                 fs.writeFileSync(this.value, contents);
                 gui.Shell.openItem(this.value);
             } catch(e){
@@ -183,6 +141,12 @@ class Graph extends Widget {
     
     createContextMenu(menu) {
         var self = this;
+		menu.append(new gui.MenuItem({
+            label: "Re-center",
+            click: function () {
+                self.sendMessage({type:"reset"});
+            }
+        }));
         menu.append(new gui.MenuItem({
             label: "Export Data",
             click: function () {
@@ -190,9 +154,10 @@ class Graph extends Widget {
             }
         }));
         menu.append(new gui.MenuItem({
-            label: "Reset",
+            label: "Clear data",
             click: function () {
-                self.dataset.clear();
+				self._dataBuffer = [];
+				self.sendMessage({type:"update",data:this._dataBuffer});
             }
         }));
     }
@@ -1343,7 +1308,7 @@ class RobotCodeLog extends UnlinkedWidget {
         this.conn.on('ready', function() {
             console.log('RobotCodeLog connected');
             self._text.value += "\nConnected to robot";
-            self.conn.exec('tail --retry -f /home/lvuser/FRCUserProgram.log', function(err, stream) {
+            self.conn.exec('tail -f /home/lvuser/FRCUserProgram.log', function(err, stream) {
                 if (err) {
                     self._text.value += "\nSSH error";
                     console.error('RobotCodeLog error', err);

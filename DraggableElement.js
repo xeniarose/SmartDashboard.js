@@ -90,7 +90,7 @@ class DraggableElement {
                 win.addField({ value: "y", display: "Y" }, "number", pos.y, cb);
                 win.addField({ value: "w", display: "Width" }, "number", pos.w, cb);
                 win.addField({ value: "h", display: "Height" }, "number", pos.h, cb);
-                win.addField("Style", "textarea", self.saveData.style || "", function(k, v){
+                win.addField("Style", "textarea", self.saveData.style || "" , function(k, v){
                     self.saveData.style = v;
                     self._applyStyles(self.dom, v);
                 });
@@ -370,9 +370,13 @@ class DraggableElement {
         
     }
     
-    destroy(){
-        
+    _destroy(){
+        this.destroy();
     }
+	
+	destroy() {
+		
+	}
 }
 
 global.DraggableElement = DraggableElement;

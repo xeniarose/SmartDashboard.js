@@ -50,6 +50,20 @@ ContextMenu.defs = {
             label: "SmartDashboard.js " + gui.App.manifest.version,
             enabled: false
         },
+		{
+            label: "New"
+        },
+		{
+            label: "Layout"
+        },
+        {
+            label: "Editable",
+            type: "checkbox",
+            click: function () {
+                SmartDashboard.setEditable(this.checked);
+            }
+        },
+		"---",
         {
             label: "About",
             click: function(){
@@ -62,7 +76,7 @@ ContextMenu.defs = {
                 SmartDashboard.showOptions();
             }
         },
-        "---",
+		"---",
         {
             label: "Restart",
             click: function(){
@@ -77,21 +91,6 @@ ContextMenu.defs = {
                 SmartDashboard.onExit();
             }
         },
-        "---",
-        {
-            label: "Layout"
-        },
-        "---",
-        {
-            label: "New"
-        },
-        {
-            label: "Editable",
-            type: "checkbox",
-            click: function () {
-                SmartDashboard.setEditable(this.checked);
-            }
-        }
     ],
     "profiles": [
         "---",

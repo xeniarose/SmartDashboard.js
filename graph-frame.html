@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+
+	<script src="assets/Chart.bundle.min.js"></script>
+	<script src="assets/hammer.min.js"></script>
+	<script src="assets/chartjs-plugin-zoom.min.js"></script>
+	
+    <style>
+		html, body {
+			width: 100%;
+			height: 100%;
+			padding: 0;
+			margin: 0;
+			background: #464646;
+			color: white;
+			cursor: move;
+		}
+		
+		#chart {
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+		}
+    </style>
+</head>
+
+<body>
+    <canvas id="chart"></canvas>
+	
+	<script>
+		Chart.defaults.global.legend.display = false;
+		Chart.defaults.global.animation.duration = 0;
+		Chart.defaults.global.maintainAspectRatio = false;
+		
+		var chart;
+		
+		console.log("Chart init");
+		
+		var messageSource, messageOrigin;
+		window.addEventListener('message', function(e) {
+			var messageSource = e.source;
+			var messageOrigin = e.origin;
+			var data = e.data;
+			if(data.type == "update") {
+				chart.data.datasets[0].data = data.data;
+				chart.update();
+			} else if(data.type == "reset") {
+				chart.resetZoom();
+			}
+			//messageSource.postMessage(data, messageOrigin);
+		});
+		
+		createChart();
+		
+		function createChart() {
+			chart = new Chart(document.querySelector("canvas"), {
+				type: 'line',
+				data: {
+					datasets: [{
+						label: 'Dataset',
+						borderWidth: 1,
+						borderColor: '#01D3FF',
+						//backgroundColor: 'rgba(255,255,255,0.2)',
+						pointRadius: 1,
+						steppedLine: true,
+						fill: false,
+						data: []
+					}]
+				},
+				options: {
+					scales: {
+						xAxes: [{
+							type: 'time',
+							time: {
+								displayFormats: {
+									'millisecond': 'ss.SSS',
+									'second': 'mm:ss',
+									'minute': 'mm',
+									'hour': 'hh:mm A'
+								},
+								tooltipFormat: 'hh:mm:ss.SSS A'
+							},
+							position: 'bottom',
+							ticks: {
+								autoSkip: true,
+								maxRotation: 0,
+								fontColor: "gray"
+							},
+							gridLines: {
+								color: "gray",
+								zeroLineColor: "gray"
+							}
+						}],
+						yAxes: [{
+							ticks: {
+								autoSkip: true,
+								maxRotation: 0,
+								fontColor: "gray"
+							},
+							gridLines: {
+								color: "gray",
+								zeroLineColor: "gray"
+							}
+						}]
+					},
+					pan: {
+						enabled: true,
+						mode: 'xy'
+					},
+					zoom: {
+						enabled: true,
+						mode: 'xy',
+					}
+				}
+			});
+		}
+    </script>
+</body>
+</html>

@@ -167,10 +167,13 @@
             }
             cont.appendChild(inp);
             inp.setAttribute("type", type);
-            if(type == "checkbox")
+            if(type == "checkbox") {
                 inp.checked = def;
-            else
+            } else if(type == "textarea") {
+				inp.value = def;
+			} else {
                 inp.setAttribute("value", def);
+			}
             inp.onchange = (function(name, cb){
                 return function(e){
                     cb(name, e.target.type == "checkbox" ? e.target.checked : e.target.value);
