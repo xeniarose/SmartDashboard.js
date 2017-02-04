@@ -1021,7 +1021,7 @@ class USBCameraStream extends UnlinkedWidget {
                 this.udpLastTime < Date.now() - 10 * 1000) {
             // we're not sure if this packet will get dropped or something bad will happen
             // because it's UDP, so we just repeatedly send it to be sure
-            this.udpSendSettings(rinfo.address, rinfo.port);
+            if(rinfo && rinfo.address && rinfo.port) this.udpSendSettings(rinfo.address, rinfo.port);
             this.udpLastTime = Date.now();
         }
         
