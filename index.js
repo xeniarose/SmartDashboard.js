@@ -7,7 +7,8 @@ var SmartDashboard = {
     plugins: [],
     recentFiles: [],
     exitable: true,
-    _iconMap: {}
+    _iconMap: {},
+	console: window.console
 };
 
 var pre = "font-family: 'Source Sans Pro';font-size:3em;border-bottom:";
@@ -366,6 +367,7 @@ SmartDashboard.init = function () {
             var plugin = {};
             try {
                 plugin = require(fullPath);
+				plugin.pluginDirectory = fullPath;
             } catch(e){
                 SmartDashboard.handleError(e);
                 plugin.info = {
