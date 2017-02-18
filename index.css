@@ -214,7 +214,7 @@ body.vfx-allowed #entries .list ul {
 }
 
 #entries .list li.open>ul {
-    max-height: 1500px;
+    max-height: 15000px;
     opacity: 1;
 }
 
