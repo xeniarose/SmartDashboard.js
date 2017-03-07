@@ -829,10 +829,15 @@ class USBCameraStream extends UnlinkedWidget {
             self.aspectRatio = width / height;
             this.style.removeProperty("min-width");
             this.style.removeProperty("min-height");
+            var pos = self.getPosition();
             if(!self.streaming){
                 self.streaming = true;
-                var pos = self.getPosition();
+                
                 self.setPosition(pos.x, pos.y, width, height);
+            }
+            var realAspectRatio = pos.w / pos.h;
+            if (realAspectRatio < self.aspectRatio - 0.01 || realAspectRatio > self.aspectRatio + 0.01) {
+              self.setPosition(pos.x, pos.y, pos.h * self.aspectRatio, pos.h);
             }
         });
         
