@@ -245,6 +245,7 @@ class Meter extends Widget {
         this.root.appendChild(el);
         this._valLabel = document.createElement("label");
         this._valLabel.style.width = this._valLabel.style.minWidth = "4em";
+        this._valLabel.style.display = "flex";
         this.root.appendChild(this._valLabel);
     }
     

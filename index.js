@@ -617,7 +617,9 @@ SmartDashboard.loadWidgets = function(){
     
     if(widgets.length > 20) {
         DomUtils.openBlurredDialog("#update-screen", function() {
-            next(i, widgets, progress, status);
+            setTimeout(function() {
+              next(i, widgets, progress, status);
+            }, 1000);
         });
     } else {
         next(i, widgets, progress, status);

@@ -557,11 +557,11 @@ class DomUtils {
             if(cb) setTimeout(cb, 500);
         }
         try {
-            nw.Window.get().capturePage(function(res){
+            /*nw.Window.get().capturePage(function(res){
                 if(!bg.parentElement.classList.contains("active"))
                     bg.style.backgroundImage = "url(" + res + ")";
                 complete();
-            });
+            });*/complete();
         } catch(e){
             // nw sometimes fails to capture with "unknown error"
             // so we ignore it and open the dialog anyway
